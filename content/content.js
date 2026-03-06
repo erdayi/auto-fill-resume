@@ -752,7 +752,7 @@
     }, 2000);
   }
 
-  function showBadge(count) {
+  function showBadge(count, label) {
     const existing = document.getElementById('__rf-badge');
     if (existing) existing.remove();
 
@@ -768,7 +768,7 @@
 
     const badge = document.createElement('div');
     badge.id = '__rf-badge';
-    badge.innerHTML = `<span style="font-size:20px;margin-right:6px">&#10003;</span> 已填写 ${count} 个字段`;
+    badge.innerHTML = `<span style="font-size:20px;margin-right:6px">&#10003;</span> ${label || '已填写'} ${count} 个字段`;
     badge.style.cssText = `
       position:fixed;top:20px;right:20px;z-index:2147483647;
       background:linear-gradient(135deg,#34a853,#2d8f47);color:#fff;
@@ -945,10 +945,13 @@
 
   api.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg.action === 'fillForm') {
-      // Use async wrapper for multi-entry filling
       (async () => {
         try {
           const count = await fillFormAsync(msg.data);
+          // Start auto-fill for subsequent steps
+          startAutoFill(msg.data);
+          // Save snapshot after fill
+          saveFormSnapshot();
           sendResponse({ success: count > 0, filledCount: count });
         } catch (err) {
           console.error('[Resume Filler]', err);
@@ -971,6 +974,16 @@
       } catch (err) {
         sendResponse({ success: false, info: {} });
       }
+      return true;
+    }
+    if (msg.action === 'stopAutoFill') {
+      stopAutoFill();
+      sendResponse({ success: true });
+      return true;
+    }
+    if (msg.action === 'clearSiteData') {
+      api.storage.local.remove(getSiteKey());
+      sendResponse({ success: true });
       return true;
     }
     return true;
@@ -1116,6 +1129,133 @@
     }
 
     return count;
+  }
+
+  // ================================================================
+  // SECTION 12: AUTO-FILL ON STEP CHANGE (MutationObserver)
+  // ================================================================
+
+  let _autoFillData = null;
+  let _autoFillTimer = null;
+  let _lastFilledSnapshot = '';
+
+  function startAutoFill(data) {
+    _autoFillData = data;
+    _lastFilledSnapshot = getFormSnapshot();
+
+    if (_autoFillObserver) _autoFillObserver.disconnect();
+    _autoFillObserver = new MutationObserver(() => {
+      if (!_autoFillData) return;
+      // Debounce: wait for DOM to stabilize
+      clearTimeout(_autoFillTimer);
+      _autoFillTimer = setTimeout(async () => {
+        const snap = getFormSnapshot();
+        if (snap === _lastFilledSnapshot || snap === '') return;
+        _lastFilledSnapshot = snap;
+        const count = await fillFormAsync(_autoFillData);
+        if (count > 0) {
+          showBadge(count, '自动填写');
+          saveFormSnapshot();
+        }
+      }, 800);
+    });
+    _autoFillObserver.observe(document.body, {
+      childList: true, subtree: true, attributes: false,
+    });
+  }
+
+  function stopAutoFill() {
+    _autoFillData = null;
+    if (_autoFillObserver) { _autoFillObserver.disconnect(); _autoFillObserver = null; }
+    clearTimeout(_autoFillTimer);
+  }
+
+  let _autoFillObserver = null;
+
+  // Snapshot: a fingerprint of current form fields to detect step changes
+  function getFormSnapshot() {
+    const els = getAllFormElements();
+    return els.map(el => {
+      const r = el.getBoundingClientRect();
+      return `${el.tagName}:${el.type||''}:${(el.name||el.id||'').substring(0,20)}:${Math.round(r.top)}`;
+    }).join('|');
+  }
+
+  // ================================================================
+  // SECTION 13: FORM DATA PERSISTENCE PER SITE
+  // ================================================================
+
+  function getSiteKey() {
+    // Use origin + pathname (without query/hash) as key
+    return `formData_${location.origin}${location.pathname}`;
+  }
+
+  function saveFormSnapshot() {
+    try {
+      const els = getAllFormElements();
+      const snapshot = {};
+      els.forEach((el, i) => {
+        const id = el.id || el.name || `__idx_${i}_${el.type || el.tagName}`;
+        if (el.tagName === 'SELECT') {
+          snapshot[id] = el.value;
+        } else if (el.type === 'checkbox' || el.type === 'radio') {
+          if (el.checked) snapshot[id] = el.value || 'on';
+        } else if (el.contentEditable === 'true') {
+          snapshot[id] = el.innerHTML;
+        } else {
+          snapshot[id] = el.value;
+        }
+      });
+      const key = getSiteKey();
+      api.storage.local.set({ [key]: { data: snapshot, time: Date.now() } });
+    } catch (e) { /* ignore */ }
+  }
+
+  function restoreFormSnapshot() {
+    const key = getSiteKey();
+    api.storage.local.get(key, (result) => {
+      const saved = result[key];
+      if (!saved || !saved.data) return;
+      // Expire after 7 days
+      if (Date.now() - saved.time > 7 * 24 * 3600 * 1000) {
+        api.storage.local.remove(key);
+        return;
+      }
+      const els = getAllFormElements();
+      let restored = 0;
+      els.forEach((el, i) => {
+        const id = el.id || el.name || `__idx_${i}_${el.type || el.tagName}`;
+        const val = saved.data[id];
+        if (val === undefined || val === '') return;
+        if (el.type === 'checkbox' || el.type === 'radio') {
+          if (el.value === val || val === 'on') { el.checked = true; restored++; }
+        } else if (el.contentEditable === 'true') {
+          if (!el.innerHTML.trim()) { el.innerHTML = val; restored++; }
+        } else if (el.tagName === 'SELECT') {
+          el.value = val; restored++;
+        } else {
+          if (!el.value.trim()) {
+            setFieldValue(el, val);
+            restored++;
+          }
+        }
+      });
+      if (restored > 0) showBadge(restored, '已恢复');
+    });
+  }
+
+  // Save form data periodically when user is interacting
+  let _saveDebounce = null;
+  document.addEventListener('input', () => {
+    clearTimeout(_saveDebounce);
+    _saveDebounce = setTimeout(saveFormSnapshot, 2000);
+  }, true);
+
+  // On page load, try to restore saved form data
+  if (document.readyState === 'complete') {
+    setTimeout(restoreFormSnapshot, 500);
+  } else {
+    window.addEventListener('load', () => setTimeout(restoreFormSnapshot, 500));
   }
 
 })();
