@@ -462,6 +462,7 @@ function saveHistory() {
 function renderHistory(filter = 'all') {
   const list = document.getElementById('historyList');
   const empty = document.getElementById('historyEmpty');
+  const tableWrap = document.getElementById('historyTableWrap');
   const countEl = document.getElementById('historyCount');
 
   const filtered = filter === 'all' ? historyData : historyData.filter(h => h.status === filter);
@@ -469,30 +470,30 @@ function renderHistory(filter = 'all') {
 
   if (filtered.length === 0) {
     list.innerHTML = '';
+    tableWrap.style.display = 'none';
     empty.style.display = 'block';
     return;
   }
   empty.style.display = 'none';
+  tableWrap.style.display = 'block';
 
-  list.innerHTML = filtered.map((item, i) => {
+  list.innerHTML = filtered.map((item) => {
     const idx = historyData.indexOf(item);
     const date = new Date(item.date).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' });
-    const safeCompany = (item.company || '未知公司').replace(/</g, '&lt;');
+    const safeCompany = (item.company || '未知').replace(/</g, '&lt;');
     const safeJob = (item.job || '').replace(/</g, '&lt;');
+    const safeNote = (item.note || '').replace(/</g, '&lt;');
     const safeUrl = (item.url || '').replace(/</g, '&lt;');
-    return `
-      <div class="history-item" data-idx="${idx}">
-        <div class="history-info">
-          <div class="history-company">${safeCompany}</div>
-          ${safeJob ? `<div class="history-job">${safeJob}</div>` : ''}
-          <div class="history-url" title="${safeUrl}">${safeUrl}</div>
-        </div>
-        <div class="history-meta">
-          <span class="history-date">${date}</span>
-          <button class="history-status" data-status="${item.status}" data-idx="${idx}">${item.status}</button>
-          <button class="history-delete" data-idx="${idx}" title="删除">&times;</button>
-        </div>
-      </div>`;
+    return `<tr data-idx="${idx}">
+      <td class="td-company">
+        <div class="td-company-name" title="${safeUrl}">${safeCompany}</div>
+        ${safeJob ? `<div class="td-job">${safeJob}</div>` : ''}
+      </td>
+      <td class="td-date">${date}</td>
+      <td><button class="history-status" data-status="${item.status}" data-idx="${idx}">${item.status}</button></td>
+      <td class="td-note"><input class="note-input" data-idx="${idx}" value="${safeNote}" placeholder="添加备注..." maxlength="50"></td>
+      <td><button class="history-delete" data-idx="${idx}" title="删除">&times;</button></td>
+    </tr>`;
   }).join('');
 }
 
@@ -517,6 +518,34 @@ document.getElementById('historyList').addEventListener('click', (e) => {
     saveHistory();
     renderHistory(document.getElementById('historyFilter').value);
   }
+});
+
+// Note inline editing
+document.getElementById('historyList').addEventListener('input', (e) => {
+  if (e.target.classList.contains('note-input')) {
+    const idx = parseInt(e.target.dataset.idx);
+    historyData[idx].note = e.target.value;
+    saveHistory();
+  }
+});
+
+// Export history as CSV
+document.getElementById('exportHistory').addEventListener('click', () => {
+  if (historyData.length === 0) { showToast('暂无记录可导出', 'info'); return; }
+  const header = '公司,职位,日期,状态,备注,链接\n';
+  const rows = historyData.map(h => {
+    const date = new Date(h.date).toLocaleDateString('zh-CN');
+    return [h.company, h.job, date, h.status, h.note || '', h.url || '']
+      .map(v => `"${(v || '').replace(/"/g, '""')}"`)
+      .join(',');
+  }).join('\n');
+  const bom = '\uFEFF';
+  const blob = new Blob([bom + header + rows], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `投递记录_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+  showToast('已导出CSV文件');
 });
 
 document.getElementById('historyFilter').addEventListener('change', (e) => {
@@ -574,10 +603,10 @@ document.getElementById('btnRecord').addEventListener('click', async () => {
 
     historyData.unshift({
       company: company || '未知公司',
-      job,
-      url,
+      job, url,
       date: Date.now(),
-      status: '已投递'
+      status: '已投递',
+      note: ''
     });
     saveHistory();
     renderHistory();
@@ -603,7 +632,8 @@ document.getElementById('addHistory').addEventListener('click', async () => {
     job: job.substring(0, 30),
     url: tab?.url || '',
     date: Date.now(),
-    status: '已投递'
+    status: '已投递',
+    note: ''
   });
   saveHistory();
   renderHistory();

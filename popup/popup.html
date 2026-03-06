@@ -321,12 +321,20 @@
               <option value="已录用">已录用</option>
               <option value="已拒绝">已拒绝</option>
             </select>
+            <button id="exportHistory" class="icon-btn" title="导出CSV">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 13h12v1H2v-1zM8 2l4 4h-3v5H7V6H4l4-4z"/></svg>
+            </button>
             <button id="addHistory" class="icon-btn" title="手动添加">
               <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 2a1 1 0 011 1v4h4a1 1 0 110 2H9v4a1 1 0 11-2 0V9H3a1 1 0 010-2h4V3a1 1 0 011-1z"/></svg>
             </button>
           </div>
         </div>
-        <div id="historyList" class="history-list"></div>
+        <div id="historyTableWrap" class="history-table-wrap">
+          <table class="history-table">
+            <thead><tr><th>公司/职位</th><th>日期</th><th>状态</th><th>备注</th><th></th></tr></thead>
+            <tbody id="historyList"></tbody>
+          </table>
+        </div>
         <div id="historyEmpty" class="history-empty">
           <svg width="32" height="32" viewBox="0 0 16 16" fill="#d1d5db"><path d="M2 2h12v2H2V2zm0 4h12v2H2V6zm0 4h12v2H2v-2z"/></svg>
           <p>暂无投递记录</p>

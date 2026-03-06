@@ -273,38 +273,41 @@ body {
   cursor: pointer; font-family: inherit;
 }
 
-.history-list { display: flex; flex-direction: column; gap: 6px; }
-
-.history-item {
-  display: flex; align-items: flex-start; gap: 10px;
-  padding: 10px 12px; background: var(--surface);
-  border: 1px solid var(--border); border-radius: var(--radius);
-  transition: box-shadow 0.15s; animation: fadeIn 0.2s ease;
+.history-table-wrap { overflow-x: auto; }
+.history-table {
+  width: 100%; border-collapse: collapse; font-size: 11px;
 }
-.history-item:hover { box-shadow: var(--shadow-sm); }
-
-.history-info { flex: 1; min-width: 0; }
-.history-company {
-  font-size: 13px; font-weight: 600; color: var(--text);
+.history-table th {
+  text-align: left; padding: 4px 6px; font-size: 10px; color: var(--text-secondary);
+  border-bottom: 1px solid var(--border); white-space: nowrap; font-weight: 500;
+}
+.history-table td {
+  padding: 6px; border-bottom: 1px solid #f3f4f6; vertical-align: middle;
+}
+.history-table tr:hover td { background: #fafbfc; }
+.td-company { max-width: 100px; }
+.td-company-name {
+  font-weight: 600; color: var(--text); white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; cursor: default;
+}
+.td-job {
+  font-size: 10px; color: var(--text-secondary); margin-top: 1px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.history-job {
-  font-size: 11px; color: var(--text-secondary); margin-top: 1px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+.td-date { font-size: 10px; color: var(--text-secondary); white-space: nowrap; }
+.td-note { min-width: 70px; }
+.note-input {
+  width: 100%; border: none; background: transparent; font-size: 10px;
+  color: var(--text); padding: 2px 4px; border-radius: 3px; font-family: inherit;
+  outline: none;
 }
-.history-url {
-  font-size: 10px; color: #9ca3af; margin-top: 2px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.history-meta {
-  display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
-  flex-shrink: 0;
-}
-.history-date { font-size: 10px; color: var(--text-secondary); white-space: nowrap; }
+.note-input:hover, .note-input:focus { background: #f5f6fa; }
+.note-input::placeholder { color: #d1d5db; }
 
 .history-status {
   font-size: 10px; padding: 2px 8px; border-radius: 4px;
   font-weight: 600; cursor: pointer; border: none; font-family: inherit;
+  white-space: nowrap;
 }
 .history-status[data-status="已投递"] { background: #e3f2fd; color: #1565c0; }
 .history-status[data-status="待投递"] { background: #fff3e0; color: #e65100; }
