@@ -275,8 +275,8 @@
     },
     // Competition / Award
     competitionName: {
-      kw: ['竞赛名称','比赛名称','奖项名称','获奖名称','competition','award name','contest'],
-      ex: ['competitionname','awardname','contestname','jsmc'],
+      kw: ['竞赛名称','比赛名称','奖项名称','获奖名称','获奖项','获奖情况','奖项','competition','award name','contest','award'],
+      ex: ['competitionname','awardname','contestname','jsmc','awarditem','hjx'],
       neg: [], w: 5
     },
     awardLevel: {
@@ -713,7 +713,7 @@
       work: ['添加工作','新增工作','添加实习','add work','add experience','add internship','新增','添加经历'],
       intern: ['添加实习','新增实习','add intern','add internship','新增'],
       project: ['添加项目','新增项目','add project','新增'],
-      competition: ['添加竞赛','新增竞赛','添加获奖','添加荣誉','add competition','add award','新增'],
+      competition: ['添加竞赛','新增竞赛','添加获奖','添加荣誉','获奖情况','add competition','add award','新增'],
       certificate: ['添加证书','新增证书','添加资质','add certificate','add certification','新增'],
     };
 
