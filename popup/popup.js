@@ -731,9 +731,11 @@ document.getElementById('btnParseResume').addEventListener('click', async () => 
 
   try {
     if (parseMode === 'local') {
-      // Local rule-based parsing — instant, free
       parsedResumeData = parseResumeLocal(text);
       document.getElementById('resumeLoading').querySelector('p').textContent = '解析完成';
+      renderParsePreview(parsedResumeData);
+      document.getElementById('resumeLoading').classList.add('hidden');
+      document.getElementById('resumeStep2').classList.remove('hidden');
     } else {
       // AI parsing — requires API key
       const apiKey = document.getElementById('llmApiKey').value.trim();
@@ -753,18 +755,36 @@ document.getElementById('btnParseResume').addEventListener('click', async () => 
         return;
       }
       api.storage.local.set({ llmSettings: { provider, apiKey, model, customUrl } });
-      parsedResumeData = await parseResumeWithLLM(text, apiKey, provider, model, customUrl);
-    }
 
-    renderParsePreview(parsedResumeData);
-    document.getElementById('resumeLoading').classList.add('hidden');
-    document.getElementById('resumeStep2').classList.remove('hidden');
+      // Run local parse first (instant), then AI parse
+      document.getElementById('resumeLoading').querySelector('p').textContent = '本地预解析中...';
+      const localData = parseResumeLocal(text);
+      document.getElementById('resumeLoading').querySelector('p').textContent = 'AI 解析中...';
+      const aiData = await parseResumeWithLLM(text, apiKey, provider, model, customUrl);
+
+      // Smart merge: basic fields auto-merge, entries compare if different
+      const { merged, conflicts } = smartMergeResume(localData, aiData);
+      parsedResumeData = merged;
+      _compareLocalData = localData;
+      _compareAiData = aiData;
+
+      document.getElementById('resumeLoading').classList.add('hidden');
+      if (conflicts.length > 0) {
+        renderConflictCompare(conflicts, localData, aiData, merged);
+        document.getElementById('resumeStepCompare').classList.remove('hidden');
+      } else {
+        renderParsePreview(parsedResumeData);
+        document.getElementById('resumeStep2').classList.remove('hidden');
+      }
+    }
   } catch (err) {
     document.getElementById('resumeLoading').classList.add('hidden');
     document.getElementById('resumeStep1').classList.remove('hidden');
     showToast('解析失败: ' + err.message, 'error');
   }
 });
+
+let _compareLocalData = null, _compareAiData = null;
 
 // Back button
 document.getElementById('btnParseBack').addEventListener('click', () => {
@@ -778,11 +798,130 @@ document.getElementById('btnParseConfirm').addEventListener('click', () => {
   loadData(parsedResumeData);
   api.storage.local.set({ resumeData: collectData() });
   document.getElementById('resumeModal').classList.add('hidden');
-  // Reset modal state
   document.getElementById('resumeStep2').classList.add('hidden');
   document.getElementById('resumeStep1').classList.remove('hidden');
   showToast('简历数据已填入', 'success');
 });
+
+// Compare back
+document.getElementById('btnCompareBack').addEventListener('click', () => {
+  document.getElementById('resumeStepCompare').classList.add('hidden');
+  document.getElementById('resumeStep1').classList.remove('hidden');
+});
+
+// Compare confirm — apply user choices then go to preview
+document.getElementById('btnCompareConfirm').addEventListener('click', () => {
+  if (!parsedResumeData || !_compareLocalData || !_compareAiData) return;
+  // Apply radio selections
+  document.querySelectorAll('.compare-section').forEach(section => {
+    const key = section.dataset.key;
+    const choice = section.querySelector('input[type="radio"]:checked')?.value;
+    if (choice === 'local') {
+      parsedResumeData[key] = _compareLocalData[key] || [];
+    } else {
+      parsedResumeData[key] = _compareAiData[key] || [];
+    }
+  });
+  document.getElementById('resumeStepCompare').classList.add('hidden');
+  renderParsePreview(parsedResumeData);
+  document.getElementById('resumeStep2').classList.remove('hidden');
+});
+
+// ============ Smart Merge ============
+const ENTRY_KEYS = ['educations', 'works', 'projects', 'competitions', 'certificates'];
+const ENTRY_LABELS = { educations: '教育经历', works: '工作/实习经历', projects: '项目经历', competitions: '竞赛/荣誉', certificates: '证书' };
+
+function smartMergeResume(localData, aiData) {
+  const merged = {};
+  const conflicts = [];
+
+  // Basic fields: prefer non-empty, if both exist prefer AI
+  const allKeys = new Set([...Object.keys(localData), ...Object.keys(aiData)]);
+  for (const key of allKeys) {
+    if (ENTRY_KEYS.includes(key)) continue;
+    const lv = localData[key], av = aiData[key];
+    merged[key] = av || lv || '';
+  }
+
+  // Entry arrays: compare by count and content
+  for (const key of ENTRY_KEYS) {
+    const localArr = localData[key] || [];
+    const aiArr = aiData[key] || [];
+    if (localArr.length === 0 && aiArr.length === 0) {
+      merged[key] = [];
+    } else if (localArr.length === 0) {
+      merged[key] = aiArr;
+    } else if (aiArr.length === 0) {
+      merged[key] = localArr;
+    } else if (localArr.length === aiArr.length && entriesLookSame(localArr, aiArr, key)) {
+      merged[key] = aiArr; // Same structure, prefer AI (richer descriptions)
+    } else {
+      // Conflict: different count or content
+      conflicts.push(key);
+      merged[key] = aiArr; // Default to AI, user can switch
+    }
+  }
+  return { merged, conflicts };
+}
+
+function entriesLookSame(a, b, key) {
+  const titleKey = { educations: 'school', works: 'company', projects: 'projectName', competitions: 'competitionName', certificates: 'certName' }[key];
+  if (!titleKey) return false;
+  const aTitles = a.map(e => (e[titleKey] || '').trim()).sort();
+  const bTitles = b.map(e => (e[titleKey] || '').trim()).sort();
+  return aTitles.join('|') === bTitles.join('|');
+}
+
+function renderConflictCompare(conflicts, localData, aiData, merged) {
+  const container = document.getElementById('compareContent');
+  let html = '<div style="font-size:11px;color:#91959a;margin-bottom:8px">以下经历两种解析结果不同，请选择更准确的版本：</div>';
+
+  for (const key of conflicts) {
+    const label = ENTRY_LABELS[key] || key;
+    const localArr = localData[key] || [];
+    const aiArr = aiData[key] || [];
+    html += `<div class="compare-section" data-key="${key}">
+      <div class="compare-title">${label}</div>
+      <div class="compare-options">
+        <label class="compare-option">
+          <input type="radio" name="compare_${key}" value="local">
+          <div class="compare-card">
+            <div class="compare-card-header">本地解析 <span class="compare-count">${localArr.length} 条</span></div>
+            ${renderEntryBrief(localArr, key)}
+          </div>
+        </label>
+        <label class="compare-option">
+          <input type="radio" name="compare_${key}" value="ai" checked>
+          <div class="compare-card selected">
+            <div class="compare-card-header">AI 解析 <span class="compare-count">${aiArr.length} 条</span></div>
+            ${renderEntryBrief(aiArr, key)}
+          </div>
+        </label>
+      </div>
+    </div>`;
+  }
+  container.innerHTML = html;
+
+  // Radio toggle styling
+  container.querySelectorAll('input[type="radio"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      const section = radio.closest('.compare-section');
+      section.querySelectorAll('.compare-card').forEach(c => c.classList.remove('selected'));
+      radio.closest('.compare-option').querySelector('.compare-card').classList.add('selected');
+    });
+  });
+}
+
+function renderEntryBrief(arr, key) {
+  const titleKey = { educations: 'school', works: 'company', projects: 'projectName', competitions: 'competitionName', certificates: 'certName' }[key];
+  const subKey = { educations: 'major', works: 'jobTitle', projects: 'role', competitions: 'awardLevel', certificates: 'certDate' }[key];
+  return arr.map(e => {
+    const title = e[titleKey] || '?';
+    const sub = e[subKey] ? ` · ${e[subKey]}` : '';
+    const dates = e.startDate ? ` (${e.startDate}~${e.endDate || ''})` : '';
+    return `<div class="compare-entry">${title}${sub}${dates}</div>`;
+  }).join('');
+}
 
 // Render preview
 function renderParsePreview(data) {

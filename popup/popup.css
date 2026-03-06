@@ -450,3 +450,23 @@ body {
 }
 .parse-loading p { font-size: 13px; color: var(--text); margin-top: 4px; }
 .parse-loading .hint { font-size: 11px; color: var(--text-secondary); }
+
+/* Compare Step */
+.compare-content { max-height: 320px; overflow-y: auto; }
+.compare-section { margin-bottom: 12px; }
+.compare-title { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+.compare-options { display: flex; gap: 6px; }
+.compare-option { flex: 1; cursor: pointer; display: block; }
+.compare-option input[type="radio"] { display: none; }
+.compare-card {
+  border: 2px solid var(--border); border-radius: var(--radius);
+  padding: 8px; font-size: 11px; transition: all 0.15s;
+}
+.compare-card:hover { border-color: #b0b8c4; }
+.compare-card.selected { border-color: var(--primary); background: #f0f5ff; }
+.compare-card-header {
+  font-weight: 600; font-size: 11px; color: var(--text);
+  margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;
+}
+.compare-count { font-weight: 400; color: var(--primary); font-size: 10px; }
+.compare-entry { font-size: 10px; color: #666; padding: 2px 0; border-top: 1px solid #f0f0f0; }
