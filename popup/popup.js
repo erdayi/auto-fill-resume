@@ -615,6 +615,18 @@ loadHistory();
 // ============ Resume Upload & AI Parse ============
 let parsedResumeData = null;
 
+let parseMode = 'local'; // 'local' or 'ai'
+
+// Parse mode toggle
+document.querySelectorAll('.parse-mode-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.parse-mode-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    parseMode = tab.dataset.mode;
+    document.getElementById('aiSettings').classList.toggle('hidden', parseMode !== 'ai');
+  });
+});
+
 // Open modal
 document.getElementById('btnUploadResume').addEventListener('click', () => {
   document.getElementById('resumeModal').classList.remove('hidden');
@@ -663,15 +675,6 @@ function handleResumeFile(file) {
 
 // Parse button
 document.getElementById('btnParseResume').addEventListener('click', async () => {
-  const apiKey = document.getElementById('llmApiKey').value.trim();
-  const provider = document.getElementById('llmProvider').value;
-  const model = document.getElementById('llmModel').value.trim();
-
-  if (!apiKey) { showToast('请填写 API Key', 'error'); return; }
-
-  // Save API settings
-  api.storage.local.set({ llmSettings: { provider, apiKey, model } });
-
   // Get text: file or textarea
   let text = '';
   const file = resumeFileInput.files[0];
@@ -695,7 +698,7 @@ document.getElementById('btnParseResume').addEventListener('click', async () => 
     return;
   }
 
-  if (text.length < 50) {
+  if (text.length < 30) {
     document.getElementById('resumeLoading').classList.add('hidden');
     document.getElementById('resumeStep1').classList.remove('hidden');
     showToast('简历内容太少，请检查文件', 'error');
@@ -707,7 +710,25 @@ document.getElementById('btnParseResume').addEventListener('click', async () => 
   document.getElementById('resumeLoading').classList.remove('hidden');
 
   try {
-    parsedResumeData = await parseResumeWithLLM(text, apiKey, provider, model);
+    if (parseMode === 'local') {
+      // Local rule-based parsing — instant, free
+      parsedResumeData = parseResumeLocal(text);
+      document.getElementById('resumeLoading').querySelector('p').textContent = '解析完成';
+    } else {
+      // AI parsing — requires API key
+      const apiKey = document.getElementById('llmApiKey').value.trim();
+      const provider = document.getElementById('llmProvider').value;
+      const model = document.getElementById('llmModel').value.trim();
+      if (!apiKey) {
+        document.getElementById('resumeLoading').classList.add('hidden');
+        document.getElementById('resumeStep1').classList.remove('hidden');
+        showToast('AI 模式需要填写 API Key', 'error');
+        return;
+      }
+      api.storage.local.set({ llmSettings: { provider, apiKey, model } });
+      parsedResumeData = await parseResumeWithLLM(text, apiKey, provider, model);
+    }
+
     renderParsePreview(parsedResumeData);
     document.getElementById('resumeLoading').classList.add('hidden');
     document.getElementById('resumeStep2').classList.remove('hidden');

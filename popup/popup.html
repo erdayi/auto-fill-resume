@@ -382,28 +382,34 @@
         <button id="closeResumeModal" class="icon-btn-sm">&times;</button>
       </div>
 
-      <!-- Step 1: API Settings -->
+      <!-- Step 1: Upload -->
       <div id="resumeStep1" class="modal-step">
-        <div class="step-label">1. API 设置</div>
-        <div class="form-row">
-          <div class="form-group" style="flex:0 0 110px">
-            <label>AI 提供商</label>
-            <select id="llmProvider">
-              <option value="claude">Claude</option>
-              <option value="openai">OpenAI</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>API Key</label>
-            <input type="password" id="llmApiKey" placeholder="sk-... 或 sk-ant-...">
-          </div>
-        </div>
-        <div class="form-group">
-          <label>模型 <span style="color:#aaa;font-weight:400">(可选，留空用默认)</span></label>
-          <input type="text" id="llmModel" placeholder="默认: claude-haiku-4-5 / gpt-4o-mini">
+        <div class="parse-mode-tabs">
+          <button class="parse-mode-tab active" data-mode="local">本地解析（免费）</button>
+          <button class="parse-mode-tab" data-mode="ai">AI 增强（更准确）</button>
         </div>
 
-        <div class="step-label" style="margin-top:10px">2. 上传简历</div>
+        <div id="aiSettings" class="ai-settings hidden">
+          <div class="form-row">
+            <div class="form-group" style="flex:0 0 110px">
+              <label>AI 提供商</label>
+              <select id="llmProvider">
+                <option value="claude">Claude</option>
+                <option value="openai">OpenAI</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>API Key</label>
+              <input type="password" id="llmApiKey" placeholder="sk-... 或 sk-ant-...">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>模型 <span style="color:#aaa;font-weight:400">(可选，留空用默认)</span></label>
+            <input type="text" id="llmModel" placeholder="默认: claude-haiku-4-5 / gpt-4o-mini">
+          </div>
+        </div>
+
+        <div class="step-label" style="margin-top:8px">上传简历</div>
         <div class="upload-zone" id="uploadZone">
           <svg width="28" height="28" viewBox="0 0 16 16" fill="#c0c4cc"><path d="M8 2l4 4h-3v6H7V6H4l4-4zM2 13h12v1H2v-1z"/></svg>
           <p>拖拽文件到这里，或点击选择</p>
@@ -443,6 +449,7 @@
 
   <script src="../lib/pdf.min.js"></script>
   <script>pdfjsLib.GlobalWorkerOptions.workerSrc = '../lib/pdf.worker.min.js';</script>
+  <script src="resume-local-parser.js"></script>
   <script src="resume-parser.js"></script>
   <script src="popup.js"></script>
 </body>

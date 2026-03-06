@@ -371,6 +371,25 @@ body {
   background: var(--primary); border-radius: 2px;
 }
 
+/* Parse Mode Tabs */
+.parse-mode-tabs {
+  display: flex; gap: 0; margin-bottom: 10px;
+  background: var(--bg); border-radius: 8px; padding: 3px;
+}
+.parse-mode-tab {
+  flex: 1; padding: 6px 8px; border: none; background: transparent;
+  font-size: 11px; font-weight: 600; color: var(--text-secondary);
+  cursor: pointer; border-radius: 6px; transition: all 0.15s;
+  font-family: inherit; text-align: center;
+}
+.parse-mode-tab.active {
+  background: var(--surface); color: var(--primary);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.parse-mode-tab:hover:not(.active) { color: var(--text); }
+.ai-settings { margin-bottom: 8px; animation: fadeIn 0.2s ease; }
+.ai-settings.hidden { display: none; }
+
 /* Upload Zone */
 .upload-zone {
   border: 2px dashed var(--border); border-radius: var(--radius);
