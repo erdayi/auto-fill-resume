@@ -2,8 +2,12 @@
   "manifest_version": 3,
   "name": "简历自动填写助手 - Resume Auto Filler",
   "description": "一键自动填写求职网站表单，智能识别字段，支持个人信息、教育经历、工作经历等",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": [
+    "https://api.anthropic.com/*",
+    "https://api.openai.com/*"
+  ],
   "action": {
     "default_popup": "popup/popup.html",
     "default_icon": {

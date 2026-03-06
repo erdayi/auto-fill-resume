@@ -612,6 +612,209 @@ document.getElementById('addHistory').addEventListener('click', async () => {
 
 loadHistory();
 
+// ============ Resume Upload & AI Parse ============
+let parsedResumeData = null;
+
+// Open modal
+document.getElementById('btnUploadResume').addEventListener('click', () => {
+  document.getElementById('resumeModal').classList.remove('hidden');
+  // Load saved API settings
+  api.storage.local.get('llmSettings', (result) => {
+    if (result.llmSettings) {
+      document.getElementById('llmProvider').value = result.llmSettings.provider || 'claude';
+      document.getElementById('llmApiKey').value = result.llmSettings.apiKey || '';
+      document.getElementById('llmModel').value = result.llmSettings.model || '';
+    }
+  });
+});
+
+// Close modal
+document.getElementById('closeResumeModal').addEventListener('click', () => {
+  document.getElementById('resumeModal').classList.add('hidden');
+});
+document.querySelector('.modal-backdrop').addEventListener('click', () => {
+  document.getElementById('resumeModal').classList.add('hidden');
+});
+
+// Upload zone interactions
+const uploadZone = document.getElementById('uploadZone');
+const resumeFileInput = document.getElementById('resumeFile');
+
+uploadZone.addEventListener('click', () => resumeFileInput.click());
+uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadZone.classList.remove('dragover');
+  if (e.dataTransfer.files.length > 0) {
+    resumeFileInput.files = e.dataTransfer.files;
+    handleResumeFile(e.dataTransfer.files[0]);
+  }
+});
+resumeFileInput.addEventListener('change', () => {
+  if (resumeFileInput.files.length > 0) handleResumeFile(resumeFileInput.files[0]);
+});
+
+function handleResumeFile(file) {
+  uploadZone.classList.add('has-file');
+  uploadZone.querySelector('p').textContent = file.name;
+  uploadZone.querySelector('.hint').textContent = `${(file.size / 1024).toFixed(1)} KB`;
+}
+
+// Parse button
+document.getElementById('btnParseResume').addEventListener('click', async () => {
+  const apiKey = document.getElementById('llmApiKey').value.trim();
+  const provider = document.getElementById('llmProvider').value;
+  const model = document.getElementById('llmModel').value.trim();
+
+  if (!apiKey) { showToast('请填写 API Key', 'error'); return; }
+
+  // Save API settings
+  api.storage.local.set({ llmSettings: { provider, apiKey, model } });
+
+  // Get text: file or textarea
+  let text = '';
+  const file = resumeFileInput.files[0];
+  const pastedText = document.getElementById('resumeText').value.trim();
+
+  if (file) {
+    try {
+      document.getElementById('resumeStep1').classList.add('hidden');
+      document.getElementById('resumeLoading').classList.remove('hidden');
+      text = await extractTextFromFile(file);
+    } catch (err) {
+      document.getElementById('resumeLoading').classList.add('hidden');
+      document.getElementById('resumeStep1').classList.remove('hidden');
+      showToast(err.message, 'error');
+      return;
+    }
+  } else if (pastedText) {
+    text = pastedText;
+  } else {
+    showToast('请上传简历文件或粘贴简历文本', 'error');
+    return;
+  }
+
+  if (text.length < 50) {
+    document.getElementById('resumeLoading').classList.add('hidden');
+    document.getElementById('resumeStep1').classList.remove('hidden');
+    showToast('简历内容太少，请检查文件', 'error');
+    return;
+  }
+
+  // Show loading
+  document.getElementById('resumeStep1').classList.add('hidden');
+  document.getElementById('resumeLoading').classList.remove('hidden');
+
+  try {
+    parsedResumeData = await parseResumeWithLLM(text, apiKey, provider, model);
+    renderParsePreview(parsedResumeData);
+    document.getElementById('resumeLoading').classList.add('hidden');
+    document.getElementById('resumeStep2').classList.remove('hidden');
+  } catch (err) {
+    document.getElementById('resumeLoading').classList.add('hidden');
+    document.getElementById('resumeStep1').classList.remove('hidden');
+    showToast('解析失败: ' + err.message, 'error');
+  }
+});
+
+// Back button
+document.getElementById('btnParseBack').addEventListener('click', () => {
+  document.getElementById('resumeStep2').classList.add('hidden');
+  document.getElementById('resumeStep1').classList.remove('hidden');
+});
+
+// Confirm button - fill data
+document.getElementById('btnParseConfirm').addEventListener('click', () => {
+  if (!parsedResumeData) return;
+  loadData(parsedResumeData);
+  api.storage.local.set({ resumeData: collectData() });
+  document.getElementById('resumeModal').classList.add('hidden');
+  // Reset modal state
+  document.getElementById('resumeStep2').classList.add('hidden');
+  document.getElementById('resumeStep1').classList.remove('hidden');
+  showToast('简历数据已填入', 'success');
+});
+
+// Render preview
+function renderParsePreview(data) {
+  const preview = document.getElementById('parsePreview');
+  let html = '';
+
+  // Basic info
+  const basicFields = [
+    ['姓名', data.name], ['性别', data.gender], ['手机', data.phone], ['邮箱', data.email],
+    ['城市', data.city], ['学历', data.educations?.[0]?.degree], ['期望职位', data.expectedJob],
+  ];
+  const basicHtml = basicFields
+    .filter(([,v]) => v)
+    .map(([k,v]) => `<div class="parse-field"><span class="parse-field-key">${k}</span><span class="parse-field-val">${v}</span></div>`)
+    .join('');
+  if (basicHtml) {
+    html += `<div class="parse-section"><div class="parse-section-title">基本信息</div>${basicHtml}</div>`;
+  }
+
+  // Education
+  if (data.educations?.length > 0) {
+    html += `<div class="parse-section"><div class="parse-section-title">教育经历 (${data.educations.length})</div>`;
+    data.educations.forEach(e => {
+      html += `<div class="parse-entry"><div class="parse-entry-title">${e.school || '?'} · ${e.major || ''} · ${e.degree || ''}</div>
+        <div style="font-size:10px;color:#999">${e.startDate || ''} ~ ${e.endDate || ''}</div></div>`;
+    });
+    html += '</div>';
+  }
+
+  // Work
+  if (data.works?.length > 0) {
+    html += `<div class="parse-section"><div class="parse-section-title">工作/实习经历 (${data.works.length})</div>`;
+    data.works.forEach(w => {
+      const tag = w.workType === '实习' ? '<span style="color:#e65100;font-size:10px;background:#fff3e0;padding:0 4px;border-radius:3px;margin-left:4px">实习</span>' : '';
+      html += `<div class="parse-entry"><div class="parse-entry-title">${w.company || '?'} · ${w.jobTitle || ''}${tag}</div>
+        <div style="font-size:10px;color:#999">${w.startDate || ''} ~ ${w.endDate || ''}</div>
+        ${w.description ? `<div style="font-size:11px;color:#666;margin-top:2px">${w.description.substring(0, 80)}${w.description.length > 80 ? '...' : ''}</div>` : ''}</div>`;
+    });
+    html += '</div>';
+  }
+
+  // Projects
+  if (data.projects?.length > 0) {
+    html += `<div class="parse-section"><div class="parse-section-title">项目经历 (${data.projects.length})</div>`;
+    data.projects.forEach(p => {
+      html += `<div class="parse-entry"><div class="parse-entry-title">${p.projectName || '?'} · ${p.role || ''}</div>
+        <div style="font-size:10px;color:#999">${p.startDate || ''} ~ ${p.endDate || ''}</div></div>`;
+    });
+    html += '</div>';
+  }
+
+  // Competitions
+  if (data.competitions?.length > 0) {
+    html += `<div class="parse-section"><div class="parse-section-title">竞赛/荣誉 (${data.competitions.length})</div>`;
+    data.competitions.forEach(c => {
+      html += `<div class="parse-entry"><div class="parse-entry-title">${c.competitionName || '?'} · ${c.awardLevel || ''}</div></div>`;
+    });
+    html += '</div>';
+  }
+
+  // Certificates
+  if (data.certificates?.length > 0) {
+    html += `<div class="parse-section"><div class="parse-section-title">证书 (${data.certificates.length})</div>`;
+    data.certificates.forEach(c => {
+      html += `<div class="parse-entry"><div class="parse-entry-title">${c.certName || '?'}</div></div>`;
+    });
+    html += '</div>';
+  }
+
+  // Skills & Self evaluation
+  const extras = [];
+  if (data.skills) extras.push(`<div class="parse-field"><span class="parse-field-key">技能</span><span class="parse-field-val">${data.skills}</span></div>`);
+  if (data.selfEvaluation) extras.push(`<div class="parse-field"><span class="parse-field-key">自评</span><span class="parse-field-val">${data.selfEvaluation.substring(0, 60)}...</span></div>`);
+  if (extras.length > 0) {
+    html += `<div class="parse-section"><div class="parse-section-title">其他</div>${extras.join('')}</div>`;
+  }
+
+  preview.innerHTML = html || '<p style="text-align:center;color:#ccc">未解析到有效信息</p>';
+}
+
 // ============ Import / Export ============
 document.getElementById('btnImport').addEventListener('click', () => document.getElementById('importFile').click());
 document.getElementById('importFile').addEventListener('change', (e) => {

@@ -19,6 +19,7 @@ const includes = [
   'popup/',
   'content/',
   'icons/',
+  'lib/',
 ];
 
 // Ensure dist folder
