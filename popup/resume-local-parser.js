@@ -227,6 +227,12 @@ function splitEntries(content) {
 }
 
 function extractDateRange(text) {
+  // Explicit "至今/present/目前" detection
+  const presentMatch = text.match(/(\d{4})[.\-/年](\d{1,2})[.\-/月]?\s*[-–—~至到]\s*(至今|present|目前|现在|now|在职)/i);
+  if (presentMatch) {
+    const start = `${presentMatch[1]}-${presentMatch[2].padStart(2,'0')}`;
+    return { startDate: start, endDate: '至今' };
+  }
   const m = text.match(/(\d{4})[.\-/年](\d{1,2})[.\-/月]?\s*[-–—~至到]\s*(?:(\d{4})[.\-/年])?(\d{1,2})?[.\-/月]?|(\d{4})[.\-/年](\d{1,2})/);
   if (!m) return { startDate: '', endDate: '' };
   if (m[1]) {

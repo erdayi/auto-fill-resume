@@ -500,3 +500,10 @@ body {
 .profile-save-row { display: flex; align-items: center; gap: 8px; margin: 8px 0 4px; font-size: 11px; }
 .profile-save-row label { display: flex; align-items: center; gap: 4px; white-space: nowrap; color: #666; }
 .profile-name-input { flex: 1; font-size: 11px; padding: 3px 6px; border: 1px solid var(--border); border-radius: 4px; }
+
+/* Date with "至今" checkbox */
+.date-with-present { display: flex; align-items: center; gap: 4px; }
+.date-with-present .date-input { flex: 1; min-width: 0; }
+.present-check { display: flex; align-items: center; gap: 2px; font-size: 11px; color: #666; white-space: nowrap; cursor: pointer; user-select: none; }
+.present-check input { margin: 0; cursor: pointer; }
+.date-with-present .date-input.is-present { opacity: 0.4; pointer-events: none; }

@@ -43,7 +43,12 @@ const EDU_TEMPLATE = (idx) => `
     </div>
     <div class="form-row">
       <div class="form-group"><label>入学时间</label><input type="month" data-efield="startDate"></div>
-      <div class="form-group"><label>毕业时间</label><input type="month" data-efield="endDate"></div>
+      <div class="form-group"><label>毕业时间</label>
+        <div class="date-with-present">
+          <input type="month" data-efield="endDate" class="date-input">
+          <label class="present-check"><input type="checkbox" data-present="endDate" class="chk-present"><span>至今</span></label>
+        </div>
+      </div>
     </div>
     <div class="form-group"><label>在校经历</label><textarea data-efield="description" rows="2" placeholder="奖学金、社团、项目等"></textarea></div>
   </div>`;
@@ -67,7 +72,12 @@ const WORK_TEMPLATE = (idx) => `
     </div>
     <div class="form-row">
       <div class="form-group"><label>入职时间</label><input type="month" data-efield="startDate"></div>
-      <div class="form-group"><label>离职时间</label><input type="month" data-efield="endDate"></div>
+      <div class="form-group"><label>离职时间</label>
+        <div class="date-with-present">
+          <input type="month" data-efield="endDate" class="date-input">
+          <label class="present-check"><input type="checkbox" data-present="endDate" class="chk-present"><span>至今</span></label>
+        </div>
+      </div>
     </div>
     <div class="form-group"><label>工作描述</label><textarea data-efield="description" rows="3" placeholder="主要职责与成就"></textarea></div>
   </div>`;
@@ -84,7 +94,12 @@ const PROJECT_TEMPLATE = (idx) => `
     </div>
     <div class="form-row">
       <div class="form-group"><label>开始时间</label><input type="month" data-efield="startDate"></div>
-      <div class="form-group"><label>结束时间</label><input type="month" data-efield="endDate"></div>
+      <div class="form-group"><label>结束时间</label>
+        <div class="date-with-present">
+          <input type="month" data-efield="endDate" class="date-input">
+          <label class="present-check"><input type="checkbox" data-present="endDate" class="chk-present"><span>至今</span></label>
+        </div>
+      </div>
     </div>
     <div class="form-group"><label>项目描述</label><textarea data-efield="description" rows="3" placeholder="项目背景、技术栈、成果"></textarea></div>
     <div class="form-group"><label>项目链接</label><input type="url" data-efield="link" placeholder="https://"></div>
@@ -151,6 +166,19 @@ function addEntry(listId, template) {
     }, 200);
   });
 
+  // "至今" checkbox toggle
+  card.querySelectorAll('.chk-present').forEach(chk => {
+    chk.addEventListener('change', () => {
+      const dateInput = chk.closest('.date-with-present').querySelector('.date-input');
+      if (chk.checked) {
+        dateInput.classList.add('is-present');
+        dateInput.value = '';
+      } else {
+        dateInput.classList.remove('is-present');
+      }
+    });
+  });
+
   // Auto-scroll to new card
   card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   return card;
@@ -177,6 +205,18 @@ style.textContent = '@keyframes fadeOut { to { opacity:0; transform:translateY(-
 document.head.appendChild(style);
 
 // ============ Data Collection & Loading ============
+function collectEntryFromCard(card) {
+  const entry = {};
+  card.querySelectorAll('[data-efield]').forEach(el => {
+    const val = el.value.trim();
+    if (val) entry[el.dataset.efield] = val;
+  });
+  // "至今" checkbox overrides endDate
+  const presentChk = card.querySelector('.chk-present');
+  if (presentChk && presentChk.checked) entry.endDate = '至今';
+  return entry;
+}
+
 function collectData() {
   const data = {};
 
@@ -186,60 +226,17 @@ function collectData() {
     if (val) data[el.dataset.field] = val;
   });
 
-  // Education entries
-  data.educations = [];
-  document.querySelectorAll('#eduList .entry-card').forEach(card => {
-    const entry = {};
-    card.querySelectorAll('[data-efield]').forEach(el => {
-      const val = el.value.trim();
-      if (val) entry[el.dataset.efield] = val;
+  const listMap = {
+    educations: 'eduList', works: 'workList', projects: 'projectList',
+    competitions: 'competitionList', certificates: 'certList',
+  };
+  for (const [key, listId] of Object.entries(listMap)) {
+    data[key] = [];
+    document.querySelectorAll(`#${listId} .entry-card`).forEach(card => {
+      const entry = collectEntryFromCard(card);
+      if (Object.keys(entry).length > 0) data[key].push(entry);
     });
-    if (Object.keys(entry).length > 0) data.educations.push(entry);
-  });
-
-  // Work entries
-  data.works = [];
-  document.querySelectorAll('#workList .entry-card').forEach(card => {
-    const entry = {};
-    card.querySelectorAll('[data-efield]').forEach(el => {
-      const val = el.value.trim();
-      if (val) entry[el.dataset.efield] = val;
-    });
-    if (Object.keys(entry).length > 0) data.works.push(entry);
-  });
-
-  // Project entries
-  data.projects = [];
-  document.querySelectorAll('#projectList .entry-card').forEach(card => {
-    const entry = {};
-    card.querySelectorAll('[data-efield]').forEach(el => {
-      const val = el.value.trim();
-      if (val) entry[el.dataset.efield] = val;
-    });
-    if (Object.keys(entry).length > 0) data.projects.push(entry);
-  });
-
-  // Competition entries
-  data.competitions = [];
-  document.querySelectorAll('#competitionList .entry-card').forEach(card => {
-    const entry = {};
-    card.querySelectorAll('[data-efield]').forEach(el => {
-      const val = el.value.trim();
-      if (val) entry[el.dataset.efield] = val;
-    });
-    if (Object.keys(entry).length > 0) data.competitions.push(entry);
-  });
-
-  // Certificate entries
-  data.certificates = [];
-  document.querySelectorAll('#certList .entry-card').forEach(card => {
-    const entry = {};
-    card.querySelectorAll('[data-efield]').forEach(el => {
-      const val = el.value.trim();
-      if (val) entry[el.dataset.efield] = val;
-    });
-    if (Object.keys(entry).length > 0) data.certificates.push(entry);
-  });
+  }
 
   return data;
 }
@@ -257,60 +254,34 @@ function loadData(data) {
     }
   });
 
-  // Load education entries
-  document.getElementById('eduList').innerHTML = '';
-  if (data.educations && data.educations.length > 0) {
-    data.educations.forEach((entry, i) => {
-      const card = addEntry('eduList', EDU_TEMPLATE);
+  // Helper: load entries into a list with "至今" support
+  function loadEntries(listId, template, entries) {
+    document.getElementById(listId).innerHTML = '';
+    if (!entries || entries.length === 0) return;
+    entries.forEach(entry => {
+      const card = addEntry(listId, template);
       card.querySelectorAll('[data-efield]').forEach(el => {
-        if (entry[el.dataset.efield]) el.value = entry[el.dataset.efield];
+        const field = el.dataset.efield;
+        const val = entry[field];
+        if (field === 'endDate' && val === '至今') {
+          // Check the "至今" checkbox instead of setting date value
+          const chk = card.querySelector('.chk-present');
+          if (chk) {
+            chk.checked = true;
+            el.classList.add('is-present');
+          }
+        } else if (val) {
+          el.value = val;
+        }
       });
     });
   }
 
-  // Load work entries
-  document.getElementById('workList').innerHTML = '';
-  if (data.works && data.works.length > 0) {
-    data.works.forEach((entry, i) => {
-      const card = addEntry('workList', WORK_TEMPLATE);
-      card.querySelectorAll('[data-efield]').forEach(el => {
-        if (entry[el.dataset.efield]) el.value = entry[el.dataset.efield];
-      });
-    });
-  }
-
-  // Load project entries
-  document.getElementById('projectList').innerHTML = '';
-  if (data.projects && data.projects.length > 0) {
-    data.projects.forEach((entry, i) => {
-      const card = addEntry('projectList', PROJECT_TEMPLATE);
-      card.querySelectorAll('[data-efield]').forEach(el => {
-        if (entry[el.dataset.efield]) el.value = entry[el.dataset.efield];
-      });
-    });
-  }
-
-  // Load competition entries
-  document.getElementById('competitionList').innerHTML = '';
-  if (data.competitions && data.competitions.length > 0) {
-    data.competitions.forEach((entry, i) => {
-      const card = addEntry('competitionList', COMPETITION_TEMPLATE);
-      card.querySelectorAll('[data-efield]').forEach(el => {
-        if (entry[el.dataset.efield]) el.value = entry[el.dataset.efield];
-      });
-    });
-  }
-
-  // Load certificate entries
-  document.getElementById('certList').innerHTML = '';
-  if (data.certificates && data.certificates.length > 0) {
-    data.certificates.forEach((entry, i) => {
-      const card = addEntry('certList', CERT_TEMPLATE);
-      card.querySelectorAll('[data-efield]').forEach(el => {
-        if (entry[el.dataset.efield]) el.value = entry[el.dataset.efield];
-      });
-    });
-  }
+  loadEntries('eduList', EDU_TEMPLATE, data.educations);
+  loadEntries('workList', WORK_TEMPLATE, data.works);
+  loadEntries('projectList', PROJECT_TEMPLATE, data.projects);
+  loadEntries('competitionList', COMPETITION_TEMPLATE, data.competitions);
+  loadEntries('certList', CERT_TEMPLATE, data.certificates);
 }
 
 // ============ ID Card → Birthday/Gender Inference ============

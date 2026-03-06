@@ -146,7 +146,7 @@ const RESUME_PARSE_PROMPT = `你是一个精确的简历解析器。请将以下
       "major": "专业",
       "gpa": "GPA",
       "startDate": "YYYY-MM",
-      "endDate": "YYYY-MM",
+      "endDate": "YYYY-MM 或 至今",
       "description": "在校经历/奖学金/社团"
     }
   ],
@@ -156,7 +156,7 @@ const RESUME_PARSE_PROMPT = `你是一个精确的简历解析器。请将以下
       "jobTitle": "职位名称",
       "workType": "全职/实习/兼职",
       "startDate": "YYYY-MM",
-      "endDate": "YYYY-MM",
+      "endDate": "YYYY-MM 或 至今",
       "description": "工作描述（保留原文要点）"
     }
   ],
@@ -165,7 +165,7 @@ const RESUME_PARSE_PROMPT = `你是一个精确的简历解析器。请将以下
       "projectName": "项目名称",
       "role": "担任角色",
       "startDate": "YYYY-MM",
-      "endDate": "YYYY-MM",
+      "endDate": "YYYY-MM 或 至今",
       "description": "项目描述（保留原文要点）",
       "link": "项目链接"
     }

@@ -733,6 +733,61 @@
     return false;
   }
 
+  // Check if a value means "present / current / 至今"
+  function isPresentValue(v) {
+    return /^(至今|present|current|currently|now|在职|目前|-)$/i.test(v.trim());
+  }
+
+  // Handle "至今" for date fields: find nearby checkbox/radio/select and check it
+  function handlePresentDate(el) {
+    const container = el.closest(
+      '.form-group, .form-item, .el-form-item, .ant-form-item, .form-row, tr, td, ' +
+      '[class*="date"], [class*="period"], [class*="range"]'
+    ) || el.parentElement;
+    if (!container) return false;
+
+    // Strategy 1: Look for a "至今" checkbox nearby
+    const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+    for (const cb of checkboxes) {
+      const label = cb.parentElement ? cb.parentElement.textContent.trim() : '';
+      if (/至今|present|current|在职|目前/.test(label)) {
+        if (!cb.checked) { cb.checked = true; cb.dispatchEvent(new Event('change', { bubbles: true })); cb.dispatchEvent(new Event('click', { bubbles: true })); }
+        return true;
+      }
+    }
+
+    // Also search in the parent's parent (wider scope)
+    const wider = container.parentElement;
+    if (wider) {
+      const widerCbs = wider.querySelectorAll('input[type="checkbox"]');
+      for (const cb of widerCbs) {
+        const label = cb.parentElement ? cb.parentElement.textContent.trim() : '';
+        if (/至今|present|current|在职|目前/.test(label)) {
+          if (!cb.checked) { cb.checked = true; cb.dispatchEvent(new Event('change', { bubbles: true })); cb.dispatchEvent(new Event('click', { bubbles: true })); }
+          return true;
+        }
+      }
+    }
+
+    // Strategy 2: Look for a nearby select with "至今" option
+    const selects = (wider || container).querySelectorAll('select');
+    for (const sel of selects) {
+      const opt = Array.from(sel.options).find(o => /至今|present|current/.test(o.textContent.trim()));
+      if (opt) { sel.value = opt.value; triggerEvents(sel); return true; }
+    }
+
+    // Strategy 3: If it's a text input (not date type), just type "至今"
+    if (el.type === 'text' || el.type === '') {
+      el.value = '至今';
+      el.setAttribute('value', '至今');
+      triggerEvents(el);
+      return true;
+    }
+
+    // Strategy 4: Clear the date field (leave empty) — can't type "至今" into date input
+    return false;
+  }
+
   function setFieldValue(el, value) {
     if (!value) return false;
     const tag = el.tagName.toLowerCase();
@@ -755,8 +810,11 @@
       return true;
     }
 
-    // Date inputs
+    // Date inputs — handle "至今" specially
     if (tag === 'input' && (el.type === 'date' || el.type === 'month' || el.type === 'datetime-local')) {
+      if (isPresentValue(value)) {
+        return handlePresentDate(el);
+      }
       const val = el.type === 'month' ? value.substring(0, 7) : value;
       el.value = val;
       triggerEvents(el);
