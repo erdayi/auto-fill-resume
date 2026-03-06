@@ -887,6 +887,8 @@
       'h2.name', '.recruiter-company',
       // Major Chinese job sites
       '.job-sec .cname', '.com_title', '.company-title-text',
+      // 360 / specific sites
+      '.company-info .name', '.recruit-company', '.corp-info h2',
     ];
     const jobSelectors = [
       '.job-name', '.job_name', '.position-name', '.job-title',
@@ -894,6 +896,8 @@
       '.title-info h1', '.job h1', '.position h1',
       // Major Chinese job sites
       '.job-sec .name', '.pos-title', '.position-title',
+      // 360 / specific sites
+      '.job-info .title', '.recruit-title', '.post-name',
     ];
 
     if (!info.company) {
@@ -926,7 +930,12 @@
     if (!info.company || !info.job) {
       const title = document.title;
       // Common patterns: "岗位名称_公司名称-招聘平台" or "公司-岗位"
-      const cleaned = title.replace(/[-_|]?(招聘|求职|BOSS直聘|猎聘|智联|前程无忧|拉勾|牛客|实习僧|官网|校招|社招).*$/g, '');
+      // Strip trailing platform/site names: match common suffixes after separators
+      // Instead of hardcoding company names, strip known recruitment platform keywords
+      // and generic suffixes like 官网/校招/社招/招聘 etc.
+      const platformPattern = /[-_|·—]?\s*(招聘|求职|官网|校招|社招|热招|急招|内推|直聘|网招|人才|careers?|jobs?|hiring|recruit).*$/gi;
+      const knownPlatforms = /[-_|·—]\s*(BOSS直聘|猎聘|智联招聘|前程无忧|拉勾|牛客|实习僧|51job|zhaopin|liepin|lagou|脉脉|看准|大街|应届生|智联|58同城)\s*$/gi;
+      const cleaned = title.replace(knownPlatforms, '').replace(platformPattern, '').trim();
       const parts = cleaned.split(/[-–—|_]/);
       if (parts.length >= 2) {
         if (!info.job) info.job = parts[0].trim().substring(0, 40);
@@ -1267,6 +1276,8 @@
     '立即申请', '我要投递', '确认投递', '投递简历', '确定投递', '马上投递',
     '投递岗位', '确认申请', '提交简历', '发送简历', '我感兴趣', '立即沟通',
     '打招呼', '极速投递', '投个简历', '简历投递', '快速申请',
+    '预览并提交', '提交', '确认提交', '保存并提交', '立即提交',
+    '提交申请表', '确认并提交', '投递该职位', '申请该职位',
     'submit', 'apply', 'apply now', 'submit application', 'quick apply',
   ];
 

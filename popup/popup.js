@@ -1,6 +1,9 @@
 // Chrome/Edge API compatibility
 const api = globalThis.browser || globalThis.chrome;
 
+// HTML escape utility
+function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
 // ============ Tab Switching ============
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
@@ -373,8 +376,7 @@ document.getElementById('btnScan').addEventListener('click', async () => {
       if (response.fields && response.fields.length > 0) {
         count.textContent = response.fields.length;
         list.innerHTML = response.fields.map(f => {
-          const safeId = f.identifier.replace(/"/g, '&quot;');
-          return `<span class="scan-tag ${f.matched ? '' : 'unmatched'}" title="${safeId}">${f.label}</span>`;
+          return `<span class="scan-tag ${f.matched ? '' : 'unmatched'}" title="${esc(f.identifier)}">${esc(f.label)}</span>`;
         }).join('');
         panel.classList.remove('hidden');
       } else {
@@ -1014,9 +1016,9 @@ function renderEntryBrief(arr, key) {
   const titleKey = { educations: 'school', works: 'company', projects: 'projectName', competitions: 'competitionName', certificates: 'certName' }[key];
   const subKey = { educations: 'major', works: 'jobTitle', projects: 'role', competitions: 'awardLevel', certificates: 'certDate' }[key];
   return arr.map(e => {
-    const title = e[titleKey] || '?';
-    const sub = e[subKey] ? ` · ${e[subKey]}` : '';
-    const dates = e.startDate ? ` (${e.startDate}~${e.endDate || ''})` : '';
+    const title = esc(e[titleKey] || '?');
+    const sub = e[subKey] ? ` · ${esc(e[subKey])}` : '';
+    const dates = e.startDate ? ` (${esc(e.startDate)}~${esc(e.endDate || '')})` : '';
     return `<div class="compare-entry">${title}${sub}${dates}</div>`;
   }).join('');
 }
@@ -1033,7 +1035,7 @@ function renderParsePreview(data) {
   ];
   const basicHtml = basicFields
     .filter(([,v]) => v)
-    .map(([k,v]) => `<div class="parse-field"><span class="parse-field-key">${k}</span><span class="parse-field-val">${v}</span></div>`)
+    .map(([k,v]) => `<div class="parse-field"><span class="parse-field-key">${k}</span><span class="parse-field-val">${esc(v)}</span></div>`)
     .join('');
   if (basicHtml) {
     html += `<div class="parse-section"><div class="parse-section-title">基本信息</div>${basicHtml}</div>`;
@@ -1043,8 +1045,8 @@ function renderParsePreview(data) {
   if (data.educations?.length > 0) {
     html += `<div class="parse-section"><div class="parse-section-title">教育经历 (${data.educations.length})</div>`;
     data.educations.forEach(e => {
-      html += `<div class="parse-entry"><div class="parse-entry-title">${e.school || '?'} · ${e.major || ''} · ${e.degree || ''}</div>
-        <div style="font-size:10px;color:#999">${e.startDate || ''} ~ ${e.endDate || ''}</div></div>`;
+      html += `<div class="parse-entry"><div class="parse-entry-title">${esc(e.school || '?')} · ${esc(e.major)} · ${esc(e.degree)}</div>
+        <div style="font-size:10px;color:#999">${esc(e.startDate)} ~ ${esc(e.endDate)}</div></div>`;
     });
     html += '</div>';
   }
@@ -1054,9 +1056,9 @@ function renderParsePreview(data) {
     html += `<div class="parse-section"><div class="parse-section-title">工作/实习经历 (${data.works.length})</div>`;
     data.works.forEach(w => {
       const tag = w.workType === '实习' ? '<span style="color:#e65100;font-size:10px;background:#fff3e0;padding:0 4px;border-radius:3px;margin-left:4px">实习</span>' : '';
-      html += `<div class="parse-entry"><div class="parse-entry-title">${w.company || '?'} · ${w.jobTitle || ''}${tag}</div>
-        <div style="font-size:10px;color:#999">${w.startDate || ''} ~ ${w.endDate || ''}</div>
-        ${w.description ? `<div style="font-size:11px;color:#666;margin-top:2px">${w.description.substring(0, 80)}${w.description.length > 80 ? '...' : ''}</div>` : ''}</div>`;
+      html += `<div class="parse-entry"><div class="parse-entry-title">${esc(w.company || '?')} · ${esc(w.jobTitle)}${tag}</div>
+        <div style="font-size:10px;color:#999">${esc(w.startDate)} ~ ${esc(w.endDate)}</div>
+        ${w.description ? `<div style="font-size:11px;color:#666;margin-top:2px">${esc(w.description.substring(0, 80))}${w.description.length > 80 ? '...' : ''}</div>` : ''}</div>`;
     });
     html += '</div>';
   }
@@ -1065,8 +1067,8 @@ function renderParsePreview(data) {
   if (data.projects?.length > 0) {
     html += `<div class="parse-section"><div class="parse-section-title">项目经历 (${data.projects.length})</div>`;
     data.projects.forEach(p => {
-      html += `<div class="parse-entry"><div class="parse-entry-title">${p.projectName || '?'} · ${p.role || ''}</div>
-        <div style="font-size:10px;color:#999">${p.startDate || ''} ~ ${p.endDate || ''}</div></div>`;
+      html += `<div class="parse-entry"><div class="parse-entry-title">${esc(p.projectName || '?')} · ${esc(p.role)}</div>
+        <div style="font-size:10px;color:#999">${esc(p.startDate)} ~ ${esc(p.endDate)}</div></div>`;
     });
     html += '</div>';
   }
@@ -1075,7 +1077,7 @@ function renderParsePreview(data) {
   if (data.competitions?.length > 0) {
     html += `<div class="parse-section"><div class="parse-section-title">竞赛/荣誉 (${data.competitions.length})</div>`;
     data.competitions.forEach(c => {
-      html += `<div class="parse-entry"><div class="parse-entry-title">${c.competitionName || '?'} · ${c.awardLevel || ''}</div></div>`;
+      html += `<div class="parse-entry"><div class="parse-entry-title">${esc(c.competitionName || '?')} · ${esc(c.awardLevel)}</div></div>`;
     });
     html += '</div>';
   }
@@ -1084,15 +1086,15 @@ function renderParsePreview(data) {
   if (data.certificates?.length > 0) {
     html += `<div class="parse-section"><div class="parse-section-title">证书 (${data.certificates.length})</div>`;
     data.certificates.forEach(c => {
-      html += `<div class="parse-entry"><div class="parse-entry-title">${c.certName || '?'}</div></div>`;
+      html += `<div class="parse-entry"><div class="parse-entry-title">${esc(c.certName || '?')}</div></div>`;
     });
     html += '</div>';
   }
 
   // Skills & Self evaluation
   const extras = [];
-  if (data.skills) extras.push(`<div class="parse-field"><span class="parse-field-key">技能</span><span class="parse-field-val">${data.skills}</span></div>`);
-  if (data.selfEvaluation) extras.push(`<div class="parse-field"><span class="parse-field-key">自评</span><span class="parse-field-val">${data.selfEvaluation.substring(0, 60)}...</span></div>`);
+  if (data.skills) extras.push(`<div class="parse-field"><span class="parse-field-key">技能</span><span class="parse-field-val">${esc(data.skills)}</span></div>`);
+  if (data.selfEvaluation) extras.push(`<div class="parse-field"><span class="parse-field-key">自评</span><span class="parse-field-val">${esc(data.selfEvaluation.substring(0, 60))}...</span></div>`);
   if (extras.length > 0) {
     html += `<div class="parse-section"><div class="parse-section-title">其他</div>${extras.join('')}</div>`;
   }
