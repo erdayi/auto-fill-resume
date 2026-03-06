@@ -111,11 +111,19 @@ async function llmExtractPageInfo(snippet) {
 
 async function syncToOnline(record) {
   const { syncSettings } = await api.storage.local.get('syncSettings');
-  if (!syncSettings || !syncSettings.enabled || !syncSettings.webhookUrl) return;
+  if (!syncSettings || !syncSettings.enabled) return;
+
+  const type = syncSettings.type || 'feishu_bitable';
+
+  // Feishu Bitable — write row to spreadsheet
+  if (type === 'feishu_bitable') {
+    return syncToBitable(record, syncSettings);
+  }
+
+  // Webhook-based sync
+  if (!syncSettings.webhookUrl) return;
 
   const date = new Date(record.date).toLocaleString('zh-CN');
-  const type = syncSettings.type || 'feishu';
-
   try {
     let body;
     if (type === 'feishu') {
@@ -175,5 +183,50 @@ async function syncToOnline(record) {
     });
   } catch (e) {
     console.error('[Resume Filler] Sync failed:', e.message);
+  }
+}
+
+// ============ Feishu Bitable Sync ============
+
+let _feishuTokenCache = { token: '', expiresAt: 0 };
+
+async function getFeishuToken(appId, appSecret) {
+  if (_feishuTokenCache.token && Date.now() < _feishuTokenCache.expiresAt) {
+    return _feishuTokenCache.token;
+  }
+  const resp = await fetch('https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ app_id: appId, app_secret: appSecret }),
+  });
+  const data = await resp.json();
+  if (data.code !== 0) throw new Error('飞书认证失败: ' + data.msg);
+  _feishuTokenCache = { token: data.tenant_access_token, expiresAt: Date.now() + (data.expire - 60) * 1000 };
+  return data.tenant_access_token;
+}
+
+async function syncToBitable(record, settings) {
+  if (!settings.feishuAppId || !settings.feishuAppSecret || !settings.bitableAppToken || !settings.bitableTableId) return;
+
+  try {
+    const token = await getFeishuToken(settings.feishuAppId, settings.feishuAppSecret);
+    const url = `https://open.feishu.cn/open-apis/bitable/v1/apps/${settings.bitableAppToken}/tables/${settings.bitableTableId}/records`;
+
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fields: {
+          '公司': record.company || '',
+          '职位': record.job || '',
+          '投递时间': record.date,
+          '状态': record.status || '已投递',
+          '备注': record.note || '',
+          '链接': record.url ? { link: record.url, text: '查看职位' } : '',
+        },
+      }),
+    });
+  } catch (e) {
+    console.error('[Resume Filler] Bitable sync failed:', e.message);
   }
 }

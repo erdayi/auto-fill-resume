@@ -645,13 +645,24 @@ document.getElementById('addHistory').addEventListener('click', async () => {
 loadHistory();
 
 // ============ Sync & Detection Settings ============
+function toggleSyncUI() {
+  const type = document.getElementById('syncType').value;
+  const isBitable = type === 'feishu_bitable';
+  document.getElementById('bitableConfig').classList.toggle('hidden', !isBitable);
+  document.getElementById('webhookConfig').classList.toggle('hidden', isBitable);
+}
+
 function loadSyncSettings() {
   api.storage.local.get(['syncSettings', 'submitKeywords'], (result) => {
     const s = result.syncSettings || {};
-    document.getElementById('syncType').value = s.type || 'feishu';
+    document.getElementById('syncType').value = s.type || 'feishu_bitable';
     document.getElementById('syncWebhookUrl').value = s.webhookUrl || '';
     document.getElementById('syncEnabled').checked = !!s.enabled;
+    document.getElementById('feishuAppId').value = s.feishuAppId || '';
+    document.getElementById('feishuAppSecret').value = s.feishuAppSecret || '';
+    document.getElementById('feishuBitableUrl').value = s.feishuBitableUrl || '';
     document.getElementById('customSubmitKeywords').value = (result.submitKeywords || []).join(',');
+    toggleSyncUI();
   });
 }
 
@@ -660,19 +671,27 @@ function saveSyncSettings() {
     type: document.getElementById('syncType').value,
     webhookUrl: document.getElementById('syncWebhookUrl').value.trim(),
     enabled: document.getElementById('syncEnabled').checked,
+    feishuAppId: document.getElementById('feishuAppId').value.trim(),
+    feishuAppSecret: document.getElementById('feishuAppSecret').value.trim(),
+    feishuBitableUrl: document.getElementById('feishuBitableUrl').value.trim(),
   };
+  // Parse bitable URL → extract app_token and table_id
+  const bitableMatch = settings.feishuBitableUrl.match(/\/base\/([A-Za-z0-9]+)/);
+  if (bitableMatch) settings.bitableAppToken = bitableMatch[1];
   api.storage.local.set({ syncSettings: settings });
 }
 
-document.getElementById('syncType').addEventListener('change', saveSyncSettings);
+document.getElementById('syncType').addEventListener('change', () => { toggleSyncUI(); saveSyncSettings(); });
 document.getElementById('syncWebhookUrl').addEventListener('change', saveSyncSettings);
 document.getElementById('syncEnabled').addEventListener('change', saveSyncSettings);
+document.getElementById('feishuAppId').addEventListener('change', saveSyncSettings);
+document.getElementById('feishuAppSecret').addEventListener('change', saveSyncSettings);
+document.getElementById('feishuBitableUrl').addEventListener('change', saveSyncSettings);
 
 // Custom submit keywords
 document.getElementById('customSubmitKeywords').addEventListener('change', (e) => {
   const keywords = e.target.value.split(/[,，]/).map(s => s.trim().toLowerCase()).filter(Boolean);
   api.storage.local.set({ submitKeywords: keywords });
-  // Notify all tabs
   api.tabs.query({}, (tabs) => {
     tabs.forEach(tab => {
       api.tabs.sendMessage(tab.id, { action: 'updateSubmitKeywords', keywords }).catch(() => {});
@@ -680,33 +699,136 @@ document.getElementById('customSubmitKeywords').addEventListener('change', (e) =
   });
 });
 
-// Test webhook
+// Bitable help
+document.getElementById('bitableHelp').addEventListener('click', (e) => {
+  e.preventDefault();
+  alert('飞书多维表格配置步骤：\n\n' +
+    '1. 打开 open.feishu.cn/app → 创建企业自建应用\n' +
+    '2. 在应用权限中添加: bitable:app, bitable:record\n' +
+    '3. 发布应用并获取 App ID 和 App Secret\n' +
+    '4. 在飞书中创建一个多维表格\n' +
+    '5. 将应用添加为表格协作者（右上角分享→添加）\n' +
+    '6. 复制多维表格的浏览器地址粘贴到下方\n' +
+    '7. 点击"初始化表格结构"自动创建字段\n' +
+    '8. 勾选"启用自动同步"即可');
+});
+
+// Init bitable structure
+document.getElementById('bitableInit').addEventListener('click', async () => {
+  saveSyncSettings();
+  const { syncSettings } = await new Promise(r => api.storage.local.get('syncSettings', r));
+  if (!syncSettings?.feishuAppId || !syncSettings?.feishuAppSecret || !syncSettings?.bitableAppToken) {
+    showToast('请先填写 App ID、Secret 和表格链接', 'error');
+    return;
+  }
+  try {
+    // Get tenant token
+    const tokenResp = await fetch('https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ app_id: syncSettings.feishuAppId, app_secret: syncSettings.feishuAppSecret }),
+    });
+    const tokenData = await tokenResp.json();
+    if (tokenData.code !== 0) throw new Error(tokenData.msg);
+    const token = tokenData.tenant_access_token;
+
+    // List existing tables
+    const tablesResp = await fetch(`https://open.feishu.cn/open-apis/bitable/v1/apps/${syncSettings.bitableAppToken}/tables`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    const tablesData = await tablesResp.json();
+    let tableId = '';
+
+    // Check if our table exists
+    const existing = tablesData.data?.items?.find(t => t.name === '投递记录');
+    if (existing) {
+      tableId = existing.table_id;
+    } else {
+      // Create table with fields
+      const createResp = await fetch(`https://open.feishu.cn/open-apis/bitable/v1/apps/${syncSettings.bitableAppToken}/tables`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          table: {
+            name: '投递记录',
+            default_view_name: '全部记录',
+            fields: [
+              { field_name: '公司', type: 1 },
+              { field_name: '职位', type: 1 },
+              { field_name: '投递时间', type: 5 },
+              { field_name: '状态', type: 3, property: { options: [
+                { name: '已投递', color: 0 }, { name: '已面试', color: 1 },
+                { name: '已录用', color: 2 }, { name: '已拒绝', color: 3 },
+                { name: '待投递', color: 4 },
+              ]}},
+              { field_name: '备注', type: 1 },
+              { field_name: '链接', type: 15 },
+            ],
+          },
+        }),
+      });
+      const createData = await createResp.json();
+      if (createData.code !== 0) throw new Error(createData.msg);
+      tableId = createData.data.table_id;
+    }
+
+    // Save table ID
+    syncSettings.bitableTableId = tableId;
+    api.storage.local.set({ syncSettings });
+    showToast('表格初始化成功！已创建"投递记录"表', 'success');
+  } catch (e) {
+    showToast('初始化失败: ' + e.message, 'error');
+  }
+});
+
+// Test sync
 document.getElementById('syncTest').addEventListener('click', async () => {
   saveSyncSettings();
-  const url = document.getElementById('syncWebhookUrl').value.trim();
-  if (!url) { showToast('请填写 Webhook URL', 'error'); return; }
-  const type = document.getElementById('syncType').value;
-  const testRecord = { company: '测试公司', job: '测试职位', url: 'https://example.com', date: Date.now(), status: '已投递', note: '这是一条测试消息' };
+  const { syncSettings } = await new Promise(r => api.storage.local.get('syncSettings', r));
+  const type = syncSettings?.type;
 
-  try {
-    let body;
-    if (type === 'feishu') {
-      body = JSON.stringify({ msg_type: 'text', content: { text: `📋 投递同步测试\n公司: ${testRecord.company}\n职位: ${testRecord.job}\n状态: ${testRecord.status}` } });
-    } else if (type === 'dingtalk') {
-      body = JSON.stringify({ msgtype: 'text', text: { content: `📋 投递同步测试\n公司: ${testRecord.company}\n职位: ${testRecord.job}` } });
-    } else if (type === 'wecom') {
-      body = JSON.stringify({ msgtype: 'text', text: { content: `📋 投递同步测试\n公司: ${testRecord.company}\n职位: ${testRecord.job}` } });
-    } else {
-      body = JSON.stringify(testRecord);
+  if (type === 'feishu_bitable') {
+    // Test bitable write
+    if (!syncSettings?.feishuAppId || !syncSettings?.bitableTableId) {
+      showToast('请先完成配置并初始化表格', 'error'); return;
     }
-    const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
-    if (resp.ok) {
-      showToast('测试成功，请检查消息', 'success');
-    } else {
-      showToast(`测试失败: HTTP ${resp.status}`, 'error');
-    }
-  } catch (e) {
-    showToast('测试失败: ' + e.message, 'error');
+    try {
+      const tokenResp = await fetch('https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ app_id: syncSettings.feishuAppId, app_secret: syncSettings.feishuAppSecret }),
+      });
+      const tokenData = await tokenResp.json();
+      if (tokenData.code !== 0) throw new Error(tokenData.msg);
+
+      const resp = await fetch(`https://open.feishu.cn/open-apis/bitable/v1/apps/${syncSettings.bitableAppToken}/tables/${syncSettings.bitableTableId}/records`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${tokenData.tenant_access_token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields: { '公司': '测试公司', '职位': '测试职位', '投递时间': Date.now(), '状态': '已投递', '备注': '同步测试', '链接': { link: 'https://example.com', text: '查看' } } }),
+      });
+      const data = await resp.json();
+      if (data.code === 0) showToast('测试成功！请查看飞书表格', 'success');
+      else throw new Error(data.msg);
+    } catch(e) { showToast('测试失败: ' + e.message, 'error'); }
+  } else {
+    // Webhook test
+    const url = syncSettings?.webhookUrl;
+    if (!url) { showToast('请填写 Webhook URL', 'error'); return; }
+    try {
+      let body;
+      if (type === 'feishu') {
+        body = JSON.stringify({ msg_type: 'text', content: { text: '📋 投递同步测试\n公司: 测试公司\n职位: 测试职位' } });
+      } else if (type === 'dingtalk') {
+        body = JSON.stringify({ msgtype: 'text', text: { content: '📋 投递同步测试\n公司: 测试公司\n职位: 测试职位' } });
+      } else if (type === 'wecom') {
+        body = JSON.stringify({ msgtype: 'text', text: { content: '📋 投递同步测试\n公司: 测试公司\n职位: 测试职位' } });
+      } else {
+        body = JSON.stringify({ company: '测试公司', job: '测试职位', status: '已投递' });
+      }
+      const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+      if (resp.ok) showToast('测试成功', 'success');
+      else showToast(`测试失败: HTTP ${resp.status}`, 'error');
+    } catch (e) { showToast('测试失败: ' + e.message, 'error'); }
   }
 });
 

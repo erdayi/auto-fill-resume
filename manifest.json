@@ -12,7 +12,10 @@
     "https://dashscope.aliyuncs.com/*",
     "https://open.bigmodel.cn/*",
     "https://api.siliconflow.cn/*",
-    "https://ark.cn-beijing.volces.com/*"
+    "https://ark.cn-beijing.volces.com/*",
+    "https://open.feishu.cn/*",
+    "https://oapi.dingtalk.com/*",
+    "https://qyapi.weixin.qq.com/*"
   ],
   "action": {
     "default_popup": "popup/popup.html",

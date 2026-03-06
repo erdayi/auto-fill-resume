@@ -342,6 +342,7 @@ body {
   font-size: 11px; color: var(--text); display: flex; align-items: center; gap: 4px; cursor: pointer;
 }
 .sync-toggle input { margin: 0; }
+.bitable-config { animation: fadeIn 0.2s ease; }
 
 /* Loading */
 .btn.loading { position: relative; color: transparent !important; pointer-events: none; }
