@@ -957,6 +957,55 @@ function updateProviderHints() {
 }
 document.getElementById('llmProvider').addEventListener('change', updateProviderHints);
 
+// Test LLM API connection
+document.getElementById('btnTestLLM').addEventListener('click', async () => {
+  const resultEl = document.getElementById('llmTestResult');
+  const apiKey = document.getElementById('llmApiKey').value.trim();
+  const provider = document.getElementById('llmProvider').value;
+  const model = document.getElementById('llmModel').value.trim();
+  const customUrl = document.getElementById('llmCustomUrl').value.trim();
+
+  if (!apiKey) {
+    resultEl.innerHTML = '<span style="color:var(--danger)">请先填写 API Key</span>';
+    return;
+  }
+
+  resultEl.innerHTML = '<span style="color:#91959a">测试中...</span>';
+
+  try {
+    const config = typeof LLM_PROVIDERS !== 'undefined' ? LLM_PROVIDERS[provider] : null;
+    const useModel = model || (config ? config.defaultModel : '');
+    let url, headers, body;
+
+    if (provider === 'claude') {
+      url = 'https://api.anthropic.com/v1/messages';
+      headers = { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' };
+      body = JSON.stringify({ model: useModel || 'claude-haiku-4-5-20251001', max_tokens: 10, messages: [{ role: 'user', content: 'Hi' }] });
+    } else {
+      url = provider === 'custom' ? customUrl : (config ? config.baseUrl : '');
+      if (!url) { resultEl.innerHTML = '<span style="color:var(--danger)">请填写 API 地址</span>'; return; }
+      headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` };
+      body = JSON.stringify({ model: useModel, messages: [{ role: 'user', content: 'Hi' }], max_tokens: 10 });
+    }
+
+    const resp = await fetch(url, { method: 'POST', headers, body });
+
+    if (resp.ok) {
+      const data = await resp.json();
+      const modelUsed = data.model || data.choices?.[0]?.message?.role || useModel;
+      resultEl.innerHTML = `<span style="color:var(--success)">✓ 连接成功${modelUsed ? '，模型: ' + modelUsed : ''}</span>`;
+      // Save settings on success
+      api.storage.local.set({ llmSettings: { provider, apiKey, model, customUrl } });
+    } else {
+      const err = await resp.json().catch(() => ({}));
+      const msg = err.error?.message || err.msg || `HTTP ${resp.status}`;
+      resultEl.innerHTML = `<span style="color:var(--danger)">✗ ${msg}</span>`;
+    }
+  } catch (e) {
+    resultEl.innerHTML = `<span style="color:var(--danger)">✗ ${e.message}</span>`;
+  }
+});
+
 // Close modal
 document.getElementById('closeResumeModal').addEventListener('click', () => {
   document.getElementById('resumeModal').classList.add('hidden');
