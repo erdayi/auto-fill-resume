@@ -390,8 +390,9 @@ document.getElementById('closeScan').addEventListener('click', () => {
 // ============ Fill ============
 document.getElementById('btnFill').addEventListener('click', async () => {
   const data = collectData();
-  const hasBasicData = Object.keys(data).some(k => !['educations','works','projects'].includes(k));
-  const hasEntries = (data.educations?.length || 0) + (data.works?.length || 0) + (data.projects?.length || 0) > 0;
+  const arrayKeys = ['educations','works','projects','competitions','certificates'];
+  const hasBasicData = Object.keys(data).some(k => !arrayKeys.includes(k));
+  const hasEntries = arrayKeys.some(k => data[k]?.length > 0);
   if (!hasBasicData && !hasEntries) { showToast('请先填写个人信息', 'error'); return; }
 
   const btn = document.getElementById('btnFill');
@@ -409,6 +410,10 @@ document.getElementById('btnFill').addEventListener('click', async () => {
       if (api.runtime.lastError) { showToast('填写失败，请刷新页面后重试', 'error'); return; }
       if (response && response.success) {
         showToast(`已填写 ${response.filledCount} 个字段`, 'success');
+        // Auto-highlight record button after fill
+        const recordBtn = document.getElementById('btnRecord');
+        recordBtn.style.animation = 'pulse 0.5s ease 2';
+        setTimeout(() => recordBtn.style.animation = '', 1200);
       } else {
         showToast('未找到匹配字段', 'info');
       }
@@ -440,6 +445,153 @@ document.getElementById('btnExport').addEventListener('click', () => {
   showToast('数据已导出');
 });
 
+// ============ Application History ============
+let historyData = [];
+
+function loadHistory() {
+  api.storage.local.get('applicationHistory', (result) => {
+    historyData = result.applicationHistory || [];
+    renderHistory();
+  });
+}
+
+function saveHistory() {
+  api.storage.local.set({ applicationHistory: historyData });
+}
+
+function renderHistory(filter = 'all') {
+  const list = document.getElementById('historyList');
+  const empty = document.getElementById('historyEmpty');
+  const countEl = document.getElementById('historyCount');
+
+  const filtered = filter === 'all' ? historyData : historyData.filter(h => h.status === filter);
+  countEl.textContent = historyData.length;
+
+  if (filtered.length === 0) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  list.innerHTML = filtered.map((item, i) => {
+    const idx = historyData.indexOf(item);
+    const date = new Date(item.date).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' });
+    const safeCompany = (item.company || '未知公司').replace(/</g, '&lt;');
+    const safeJob = (item.job || '').replace(/</g, '&lt;');
+    const safeUrl = (item.url || '').replace(/</g, '&lt;');
+    return `
+      <div class="history-item" data-idx="${idx}">
+        <div class="history-info">
+          <div class="history-company">${safeCompany}</div>
+          ${safeJob ? `<div class="history-job">${safeJob}</div>` : ''}
+          <div class="history-url" title="${safeUrl}">${safeUrl}</div>
+        </div>
+        <div class="history-meta">
+          <span class="history-date">${date}</span>
+          <button class="history-status" data-status="${item.status}" data-idx="${idx}">${item.status}</button>
+          <button class="history-delete" data-idx="${idx}" title="删除">&times;</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// Status cycle on click
+const STATUS_CYCLE = ['已投递', '已面试', '已录用', '已拒绝', '待投递'];
+
+document.getElementById('historyList').addEventListener('click', (e) => {
+  const statusBtn = e.target.closest('.history-status');
+  if (statusBtn) {
+    const idx = parseInt(statusBtn.dataset.idx);
+    const cur = historyData[idx].status;
+    const next = STATUS_CYCLE[(STATUS_CYCLE.indexOf(cur) + 1) % STATUS_CYCLE.length];
+    historyData[idx].status = next;
+    saveHistory();
+    renderHistory(document.getElementById('historyFilter').value);
+    return;
+  }
+  const delBtn = e.target.closest('.history-delete');
+  if (delBtn) {
+    const idx = parseInt(delBtn.dataset.idx);
+    historyData.splice(idx, 1);
+    saveHistory();
+    renderHistory(document.getElementById('historyFilter').value);
+  }
+});
+
+document.getElementById('historyFilter').addEventListener('change', (e) => {
+  renderHistory(e.target.value);
+});
+
+// Record current page
+document.getElementById('btnRecord').addEventListener('click', async () => {
+  try {
+    const [tab] = await api.tabs.query({ active: true, currentWindow: true });
+    if (!tab) { showToast('无法获取页面信息', 'error'); return; }
+
+    const url = tab.url || '';
+    const title = tab.title || '';
+
+    // Try to extract company/job from page title
+    let company = '', job = '';
+    // Common patterns: "岗位名称-公司名称" or "公司-岗位" or just title
+    const parts = title.split(/[-–—|_]/);
+    if (parts.length >= 2) {
+      company = parts[1].trim().substring(0, 30);
+      job = parts[0].trim().substring(0, 30);
+    } else {
+      company = title.substring(0, 30);
+    }
+
+    // Check for duplicate (same URL within last hour)
+    const oneHourAgo = Date.now() - 3600000;
+    const dup = historyData.find(h => h.url === url && h.date > oneHourAgo);
+    if (dup) {
+      showToast('该页面已记录过', 'info');
+      return;
+    }
+
+    historyData.unshift({
+      company,
+      job,
+      url,
+      date: Date.now(),
+      status: '已投递'
+    });
+    saveHistory();
+    renderHistory();
+    showToast('已记录投递');
+
+    // Switch to history tab
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelector('[data-tab="history"]').classList.add('active');
+    document.getElementById('tab-history').classList.add('active');
+  } catch (err) { showToast('记录失败', 'error'); }
+});
+
+// Add history manually
+document.getElementById('addHistory').addEventListener('click', async () => {
+  const [tab] = await api.tabs.query({ active: true, currentWindow: true }).catch(() => [null]);
+  const company = prompt('公司名称：');
+  if (!company) return;
+  const job = prompt('投递职位（可选）：') || '';
+
+  historyData.unshift({
+    company: company.substring(0, 30),
+    job: job.substring(0, 30),
+    url: tab?.url || '',
+    date: Date.now(),
+    status: '已投递'
+  });
+  saveHistory();
+  renderHistory();
+  showToast('已添加记录');
+});
+
+loadHistory();
+
+// ============ Import / Export ============
 document.getElementById('btnImport').addEventListener('click', () => document.getElementById('importFile').click());
 document.getElementById('importFile').addEventListener('change', (e) => {
   const file = e.target.files[0];

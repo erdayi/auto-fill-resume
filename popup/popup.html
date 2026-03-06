@@ -61,6 +61,10 @@
         <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 3a1 1 0 110 2 1 1 0 010-2zm2 8H6v-1h1V8H6V7h3v4h1v1z"/></svg>
         <span>其他</span>
       </button>
+      <button class="tab" data-tab="history">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h12v2H2V2zm0 4h12v2H2V6zm0 4h9v2H2v-2zm10.5.5l1.5 1.5 2-2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M2 2h12v2H2V2zm0 4h12v2H2V6zm0 4h8v2H2v-2z"/></svg>
+        <span>投递记录</span>
+      </button>
     </nav>
 
     <!-- Form Sections -->
@@ -301,6 +305,32 @@
           </div>
         </div>
       </div>
+      <!-- APPLICATION HISTORY -->
+      <div class="tab-content" id="tab-history">
+        <div class="history-toolbar">
+          <span class="history-stats">共 <strong id="historyCount">0</strong> 条记录</span>
+          <div class="history-actions">
+            <select id="historyFilter" class="history-filter">
+              <option value="all">全部</option>
+              <option value="已投递">已投递</option>
+              <option value="待投递">待投递</option>
+              <option value="已面试">已面试</option>
+              <option value="已录用">已录用</option>
+              <option value="已拒绝">已拒绝</option>
+            </select>
+            <button id="addHistory" class="icon-btn" title="手动添加">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 2a1 1 0 011 1v4h4a1 1 0 110 2H9v4a1 1 0 11-2 0V9H3a1 1 0 010-2h4V3a1 1 0 011-1z"/></svg>
+            </button>
+          </div>
+        </div>
+        <div id="historyList" class="history-list"></div>
+        <div id="historyEmpty" class="history-empty">
+          <svg width="32" height="32" viewBox="0 0 16 16" fill="#d1d5db"><path d="M2 2h12v2H2V2zm0 4h12v2H2V6zm0 4h12v2H2v-2z"/></svg>
+          <p>暂无投递记录</p>
+          <p class="hint">填写表单后点击"记录投递"自动添加</p>
+        </div>
+      </div>
+
     </div>
 
     <!-- Scan Result Preview -->
@@ -325,6 +355,10 @@
       <button id="btnFill" class="btn btn-primary">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2l4.5 1L14 3l-1 7.5L5.5 14 2 2zm4 4a1.5 1.5 0 100 3 1.5 1.5 0 000-3z"/></svg>
         一键填写
+      </button>
+      <button id="btnRecord" class="btn btn-record" title="记录当前网站为已投递">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M13.5 2h-11A1.5 1.5 0 001 3.5v9A1.5 1.5 0 002.5 14h11a1.5 1.5 0 001.5-1.5v-9A1.5 1.5 0 0013.5 2zM7 11L4 8l1-1 2 2 4-4 1 1-5 5z"/></svg>
+        记录
       </button>
     </div>
     <div class="footer-actions">

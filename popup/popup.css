@@ -253,6 +253,78 @@ body {
 .toast.error { background: var(--danger); }
 .toast.info { background: var(--primary); }
 
+/* Record Button */
+.btn-record {
+  flex: 0 0 auto; background: var(--surface); color: var(--primary);
+  border: 1px solid var(--primary); padding: 9px 12px;
+}
+.btn-record:hover { background: #f0f4ff; }
+
+/* History Tab */
+.history-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border);
+}
+.history-stats { font-size: 12px; color: var(--text-secondary); }
+.history-actions { display: flex; align-items: center; gap: 4px; }
+.history-filter {
+  font-size: 11px; padding: 3px 8px; border: 1px solid var(--border);
+  border-radius: 6px; background: var(--surface); color: var(--text);
+  cursor: pointer; font-family: inherit;
+}
+
+.history-list { display: flex; flex-direction: column; gap: 6px; }
+
+.history-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 12px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  transition: box-shadow 0.15s; animation: fadeIn 0.2s ease;
+}
+.history-item:hover { box-shadow: var(--shadow-sm); }
+
+.history-info { flex: 1; min-width: 0; }
+.history-company {
+  font-size: 13px; font-weight: 600; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.history-job {
+  font-size: 11px; color: var(--text-secondary); margin-top: 1px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.history-url {
+  font-size: 10px; color: #9ca3af; margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.history-meta {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
+  flex-shrink: 0;
+}
+.history-date { font-size: 10px; color: var(--text-secondary); white-space: nowrap; }
+
+.history-status {
+  font-size: 10px; padding: 2px 8px; border-radius: 4px;
+  font-weight: 600; cursor: pointer; border: none; font-family: inherit;
+}
+.history-status[data-status="已投递"] { background: #e3f2fd; color: #1565c0; }
+.history-status[data-status="待投递"] { background: #fff3e0; color: #e65100; }
+.history-status[data-status="已面试"] { background: #f3e5f5; color: #7b1fa2; }
+.history-status[data-status="已录用"] { background: #e8f5e9; color: var(--success-dark); }
+.history-status[data-status="已拒绝"] { background: #fce4ec; color: #c62828; }
+
+.history-delete {
+  width: 18px; height: 18px; display: flex; align-items: center; justify-content: center;
+  border: none; background: transparent; color: #d1d5db; cursor: pointer;
+  border-radius: 4px; font-size: 14px;
+}
+.history-delete:hover { background: #fef2f2; color: var(--danger); }
+
+.history-empty {
+  text-align: center; padding: 30px 20px; color: #d1d5db;
+}
+.history-empty p { margin-top: 6px; font-size: 13px; }
+.history-empty .hint { font-size: 11px; color: #c0c4cc; margin-top: 2px; }
+
 /* Loading */
 .btn.loading { position: relative; color: transparent !important; pointer-events: none; }
 .btn.loading::after {
@@ -261,3 +333,4 @@ body {
   border-radius: 50%; animation: spin 0.6s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); box-shadow: 0 0 0 4px rgba(66,133,244,0.2); } }
