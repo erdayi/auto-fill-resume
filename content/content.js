@@ -863,40 +863,57 @@
   function extractPageInfo() {
     const info = { company: '', job: '' };
 
-    // 1. Try Open Graph / meta tags
+    // Layer 1: JSON-LD structured data (most reliable)
+    document.querySelectorAll('script[type="application/ld+json"]').forEach(script => {
+      try {
+        const ld = JSON.parse(script.textContent);
+        const items = Array.isArray(ld) ? ld : [ld];
+        for (const item of items) {
+          if (item['@type'] === 'JobPosting') {
+            if (!info.job && item.title) info.job = item.title.substring(0, 40);
+            const org = item.hiringOrganization;
+            if (!info.company && org) info.company = (typeof org === 'string' ? org : org.name || '').substring(0, 40);
+          }
+        }
+      } catch(e) {}
+    });
+    if (info.company && info.job) return info;
+
+    // Layer 2: Meta tags (Open Graph / itemprop)
     const ogSiteName = document.querySelector('meta[property="og:site_name"]');
     const ogTitle = document.querySelector('meta[property="og:title"]');
-    if (ogTitle) {
+    const metaCompany = document.querySelector('meta[itemprop="hiringOrganization"], meta[name="company"]');
+    const metaJob = document.querySelector('meta[itemprop="title"], meta[name="position"]');
+
+    if (metaCompany && !info.company) info.company = (metaCompany.getAttribute('content') || '').substring(0, 40);
+    if (metaJob && !info.job) info.job = (metaJob.getAttribute('content') || '').substring(0, 40);
+
+    if (ogTitle && (!info.company || !info.job)) {
       const t = ogTitle.getAttribute('content') || '';
-      // Pattern: "岗位-公司" or "公司-岗位"
       const parts = t.split(/[-–—|_]/);
       if (parts.length >= 2) {
-        info.job = parts[0].trim().substring(0, 40);
-        info.company = parts[1].trim().substring(0, 40);
+        if (!info.job) info.job = parts[0].trim().substring(0, 40);
+        if (!info.company) info.company = parts[1].trim().substring(0, 40);
       }
     }
     if (ogSiteName && !info.company) {
       info.company = (ogSiteName.getAttribute('content') || '').substring(0, 40);
     }
 
-    // 2. Try common job site selectors
+    // Layer 3: DOM selectors
     const companySelectors = [
       '.company-name', '.company_name', '.employer-name', '.corp-name',
       '[class*="company-name"]', '[class*="companyName"]',
       '.job-company', '.com-name', '.company', '.firm-name',
       'h2.name', '.recruiter-company',
-      // Major Chinese job sites
       '.job-sec .cname', '.com_title', '.company-title-text',
-      // 360 / specific sites
       '.company-info .name', '.recruit-company', '.corp-info h2',
     ];
     const jobSelectors = [
       '.job-name', '.job_name', '.position-name', '.job-title',
       '[class*="job-name"]', '[class*="jobName"]', '[class*="position-name"]',
       '.title-info h1', '.job h1', '.position h1',
-      // Major Chinese job sites
       '.job-sec .name', '.pos-title', '.position-title',
-      // 360 / specific sites
       '.job-info .title', '.recruit-title', '.post-name',
     ];
 
@@ -909,7 +926,6 @@
         }
       }
     }
-
     if (!info.job) {
       for (const sel of jobSelectors) {
         const el = document.querySelector(sel);
@@ -920,19 +936,15 @@
       }
     }
 
-    // 3. Try h1 as job title fallback
+    // Layer 4: h1 fallback
     if (!info.job) {
       const h1 = document.querySelector('h1');
       if (h1) info.job = h1.textContent.trim().substring(0, 40);
     }
 
-    // 4. Fallback to page title parsing
+    // Layer 5: Page title parsing
     if (!info.company || !info.job) {
       const title = document.title;
-      // Common patterns: "岗位名称_公司名称-招聘平台" or "公司-岗位"
-      // Strip trailing platform/site names: match common suffixes after separators
-      // Instead of hardcoding company names, strip known recruitment platform keywords
-      // and generic suffixes like 官网/校招/社招/招聘 etc.
       const platformPattern = /[-_|·—]?\s*(招聘|求职|官网|校招|社招|热招|急招|内推|直聘|网招|人才|careers?|jobs?|hiring|recruit).*$/gi;
       const knownPlatforms = /[-_|·—]\s*(BOSS直聘|猎聘|智联招聘|前程无忧|拉勾|牛客|实习僧|51job|zhaopin|liepin|lagou|脉脉|看准|大街|应届生|智联|58同城)\s*$/gi;
       const cleaned = title.replace(knownPlatforms, '').replace(platformPattern, '').trim();
@@ -943,6 +955,18 @@
       } else if (!info.company) {
         info.company = cleaned.trim().substring(0, 40);
       }
+    }
+
+    // Mark if extraction is uncertain (for LLM fallback)
+    info._needsLLM = !info.company || !info.job;
+    if (info._needsLLM) {
+      // Collect page text snippet for LLM to parse
+      const snippetParts = [];
+      document.querySelectorAll('h1,h2,h3,.breadcrumb,[class*="title"],[class*="info"]').forEach(el => {
+        const t = el.textContent.trim();
+        if (t.length > 2 && t.length < 100) snippetParts.push(t);
+      });
+      info._pageSnippet = snippetParts.slice(0, 15).join('\n');
     }
 
     return info;
@@ -1335,8 +1359,82 @@
         date: Date.now(),
         status: '已投递',
         note: '',
+        _needsLLM: info._needsLLM,
+        _pageSnippet: info._pageSnippet || '',
       }
     });
   }, true);
+
+  // ================================================================
+  // SECTION 15: AUTO-DETECT EXISTING APPLICATION STATUS
+  // ================================================================
+
+  const STATUS_INDICATORS = [
+    { keywords: ['已投递', '已申请', '投递成功', '申请成功', '简历已投', '已发送'], status: '已投递' },
+    { keywords: ['面试中', '已安排面试', '面试邀请', '待面试', '笔试中', '测评中', '流程中'], status: '已面试' },
+    { keywords: ['已录用', '录用通知', 'offer', '恭喜您', '已通过'], status: '已录用' },
+    { keywords: ['已拒绝', '不合适', '未通过', '已淘汰', '不匹配'], status: '已拒绝' },
+  ];
+
+  function detectExistingStatus() {
+    // Scan page for application status indicators
+    const textEls = document.querySelectorAll(
+      '[class*="status"], [class*="state"], [class*="result"], [class*="tag"], ' +
+      '[class*="badge"], [class*="tip"], [class*="notice"], [class*="alert"], ' +
+      '.delivery-status, .apply-status, .job-status'
+    );
+
+    for (const el of textEls) {
+      if (!isVisible(el)) continue;
+      const text = el.textContent.trim();
+      if (text.length > 30) continue;
+      for (const { keywords, status } of STATUS_INDICATORS) {
+        if (keywords.some(kw => text.includes(kw))) {
+          return status;
+        }
+      }
+    }
+
+    // Also check button states — disabled "已投递" button
+    const btns = document.querySelectorAll('button[disabled], a.disabled, [class*="disabled"]');
+    for (const btn of btns) {
+      const text = (btn.textContent || '').trim();
+      if (['已投递', '已申请', '已投', '已沟通'].some(kw => text.includes(kw))) {
+        return '已投递';
+      }
+    }
+
+    return null;
+  }
+
+  // On page load, auto-detect and record existing status
+  function autoDetectAndRecord() {
+    const status = detectExistingStatus();
+    if (!status) return;
+
+    const info = extractPageInfo();
+    if (!info.company && !info.job) return;
+
+    api.runtime.sendMessage({
+      action: 'autoRecordSubmit',
+      data: {
+        company: info.company || '未知公司',
+        job: info.job || '',
+        url: location.href,
+        date: Date.now(),
+        status: status,
+        note: '页面自动识别',
+        _needsLLM: info._needsLLM,
+        _pageSnippet: info._pageSnippet || '',
+      }
+    });
+  }
+
+  // Delay detection to let page finish rendering
+  if (document.readyState === 'complete') {
+    setTimeout(autoDetectAndRecord, 1500);
+  } else {
+    window.addEventListener('load', () => setTimeout(autoDetectAndRecord, 1500));
+  }
 
 })();
