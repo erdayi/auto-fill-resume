@@ -25,7 +25,7 @@
           </svg>
           <div>
             <h1>简历自动填写</h1>
-            <span class="version">v1.3</span>
+            <span class="version">v1.4</span>
           </div>
         </div>
         <div class="header-actions">
@@ -477,6 +477,17 @@
         <button id="closeResumeModal" class="icon-btn-sm">&times;</button>
       </div>
 
+      <!-- Resume Profiles -->
+      <div id="resumeProfiles" class="resume-profiles">
+        <div class="profiles-row">
+          <select id="profileSelect" class="profile-select">
+            <option value="">-- 选择已保存的简历 --</option>
+          </select>
+          <button id="btnLoadProfile" class="btn btn-outline btn-xs" title="加载选中简历">加载</button>
+          <button id="btnDeleteProfile" class="btn btn-outline btn-xs danger" title="删除选中简历">删除</button>
+        </div>
+      </div>
+
       <!-- Step 1: Upload -->
       <div id="resumeStep1" class="modal-step">
         <div class="parse-mode-tabs">
@@ -539,6 +550,10 @@
       <div id="resumeStep2" class="modal-step hidden">
         <div class="step-label">解析结果预览</div>
         <div id="parsePreview" class="parse-preview"></div>
+        <div class="profile-save-row">
+          <label><input type="checkbox" id="chkSaveProfile" checked> 保存为简历档案</label>
+          <input type="text" id="profileName" class="profile-name-input" placeholder="档案名称，如：技术岗简历">
+        </div>
         <div class="parse-actions">
           <button id="btnParseBack" class="btn btn-outline" style="flex:1">返回修改</button>
           <button id="btnParseConfirm" class="btn btn-primary" style="flex:2">确认填入</button>

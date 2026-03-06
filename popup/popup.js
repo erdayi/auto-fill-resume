@@ -313,6 +313,69 @@ function loadData(data) {
   }
 }
 
+// ============ ID Card → Birthday/Gender Inference ============
+function parseIdCard(idCard) {
+  if (!idCard || idCard.length !== 18) return null;
+  const info = {};
+  // Birthday: positions 6-13 (YYYYMMDD)
+  const y = idCard.substring(6, 10), m = idCard.substring(10, 12), d = idCard.substring(12, 14);
+  if (+y >= 1900 && +y <= 2100 && +m >= 1 && +m <= 12 && +d >= 1 && +d <= 31) {
+    info.birthday = `${y}-${m}-${d}`;
+  }
+  // Gender: position 16 (odd=male, even=female)
+  const genderCode = parseInt(idCard.charAt(16), 10);
+  if (!isNaN(genderCode)) info.gender = genderCode % 2 === 1 ? '男' : '女';
+  // Province from first 2 digits
+  const provinceMap = {
+    '11':'北京','12':'天津','13':'河北','14':'山西','15':'内蒙古',
+    '21':'辽宁','22':'吉林','23':'黑龙江','31':'上海','32':'江苏',
+    '33':'浙江','34':'安徽','35':'福建','36':'江西','37':'山东',
+    '41':'河南','42':'湖北','43':'湖南','44':'广东','45':'广西',
+    '46':'海南','50':'重庆','51':'四川','52':'贵州','53':'云南',
+    '54':'西藏','61':'陕西','62':'甘肃','63':'青海','64':'宁夏','65':'新疆',
+    '71':'台湾','81':'香港','82':'澳门',
+  };
+  const prov = provinceMap[idCard.substring(0, 2)];
+  if (prov) info.province = prov;
+  return info;
+}
+
+// Listen for ID card input and auto-fill birthday/gender
+const idCardInput = document.querySelector('[data-field="idCard"]');
+if (idCardInput) {
+  idCardInput.addEventListener('input', () => {
+    const val = idCardInput.value.trim();
+    if (val.length === 18) {
+      const info = parseIdCard(val);
+      if (!info) return;
+      const bdField = document.querySelector('[data-field="birthday"]');
+      const genderField = document.querySelector('[data-field="gender"]');
+      const hometownField = document.querySelector('[data-field="hometown"]');
+      const hukouField = document.querySelector('[data-field="hukou"]');
+      if (info.birthday && bdField && !bdField.value) {
+        bdField.value = info.birthday;
+        bdField.classList.add('has-value');
+        bdField.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      if (info.gender && genderField && !genderField.value) {
+        genderField.value = info.gender;
+        genderField.classList.add('has-value');
+        genderField.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      if (info.province) {
+        if (hometownField && !hometownField.value) {
+          hometownField.value = info.province;
+          hometownField.classList.add('has-value');
+        }
+        if (hukouField && !hukouField.value) {
+          hukouField.value = info.province;
+          hukouField.classList.add('has-value');
+        }
+      }
+    }
+  });
+}
+
 // Auto-detect filled fields + auto-save with debounce
 let autoSaveTimer = null;
 document.addEventListener('input', (e) => {
@@ -927,6 +990,7 @@ document.getElementById('btnSettings').addEventListener('click', () => {
 // Open modal
 document.getElementById('btnUploadResume').addEventListener('click', () => {
   document.getElementById('resumeModal').classList.remove('hidden');
+  loadProfileList();
   // Load saved API settings
   api.storage.local.get('llmSettings', (result) => {
     if (result.llmSettings) {
@@ -1138,15 +1202,90 @@ document.getElementById('btnParseBack').addEventListener('click', () => {
   document.getElementById('resumeStep1').classList.remove('hidden');
 });
 
-// Confirm button - fill data
+// Confirm button - fill data + optionally save as profile
 document.getElementById('btnParseConfirm').addEventListener('click', () => {
   if (!parsedResumeData) return;
   loadData(parsedResumeData);
   api.storage.local.set({ resumeData: collectData() });
+
+  // Save as profile if checked
+  const saveProfile = document.getElementById('chkSaveProfile').checked;
+  if (saveProfile) {
+    const profileName = document.getElementById('profileName').value.trim() ||
+      (parsedResumeData.name ? `${parsedResumeData.name}的简历` : `简历 ${new Date().toLocaleDateString('zh-CN')}`);
+    saveResumeProfile(profileName, parsedResumeData);
+  }
+
   document.getElementById('resumeModal').classList.add('hidden');
   document.getElementById('resumeStep2').classList.add('hidden');
   document.getElementById('resumeStep1').classList.remove('hidden');
   showToast('简历数据已填入', 'success');
+});
+
+// ============ Resume Profiles ============
+function saveResumeProfile(name, data) {
+  api.storage.local.get('resumeProfiles', (result) => {
+    const profiles = result.resumeProfiles || [];
+    // Deduplicate by name — overwrite if same name exists
+    const idx = profiles.findIndex(p => p.name === name);
+    const entry = { name, data, savedAt: Date.now() };
+    if (idx >= 0) profiles[idx] = entry;
+    else profiles.unshift(entry);
+    // Keep max 10 profiles
+    if (profiles.length > 10) profiles.length = 10;
+    api.storage.local.set({ resumeProfiles: profiles }, () => {
+      renderProfileSelect(profiles);
+    });
+  });
+}
+
+function renderProfileSelect(profiles) {
+  const sel = document.getElementById('profileSelect');
+  sel.innerHTML = '<option value="">-- 选择已保存的简历 --</option>';
+  (profiles || []).forEach((p, i) => {
+    const date = new Date(p.savedAt).toLocaleDateString('zh-CN');
+    sel.innerHTML += `<option value="${i}">${esc(p.name)} (${date})</option>`;
+  });
+}
+
+// Load profiles on modal open
+function loadProfileList() {
+  api.storage.local.get('resumeProfiles', (result) => {
+    renderProfileSelect(result.resumeProfiles || []);
+  });
+}
+
+// Load profile button
+document.getElementById('btnLoadProfile').addEventListener('click', () => {
+  const sel = document.getElementById('profileSelect');
+  const idx = parseInt(sel.value);
+  if (isNaN(idx)) { showToast('请先选择一份简历', 'error'); return; }
+  api.storage.local.get('resumeProfiles', (result) => {
+    const profiles = result.resumeProfiles || [];
+    if (!profiles[idx]) return;
+    parsedResumeData = profiles[idx].data;
+    loadData(parsedResumeData);
+    api.storage.local.set({ resumeData: collectData() });
+    document.getElementById('resumeModal').classList.add('hidden');
+    showToast(`已加载「${profiles[idx].name}」`, 'success');
+  });
+});
+
+// Delete profile button
+document.getElementById('btnDeleteProfile').addEventListener('click', () => {
+  const sel = document.getElementById('profileSelect');
+  const idx = parseInt(sel.value);
+  if (isNaN(idx)) { showToast('请先选择一份简历', 'error'); return; }
+  api.storage.local.get('resumeProfiles', (result) => {
+    const profiles = result.resumeProfiles || [];
+    if (!profiles[idx]) return;
+    const name = profiles[idx].name;
+    profiles.splice(idx, 1);
+    api.storage.local.set({ resumeProfiles: profiles }, () => {
+      renderProfileSelect(profiles);
+      showToast(`已删除「${name}」`);
+    });
+  });
 });
 
 // Compare back

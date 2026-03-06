@@ -489,3 +489,14 @@ body {
 }
 .compare-count { font-weight: 400; color: var(--primary); font-size: 10px; }
 .compare-entry { font-size: 10px; color: #666; padding: 2px 0; border-top: 1px solid #f0f0f0; }
+
+/* Resume Profiles */
+.resume-profiles { padding: 0 16px 8px; border-bottom: 1px solid var(--border); }
+.profiles-row { display: flex; gap: 6px; align-items: center; }
+.profile-select { flex: 1; font-size: 11px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); }
+.btn-xs { font-size: 10px !important; padding: 3px 8px !important; }
+.btn-xs.danger { color: var(--danger); border-color: var(--danger); }
+.btn-xs.danger:hover { background: #fef2f2; }
+.profile-save-row { display: flex; align-items: center; gap: 8px; margin: 8px 0 4px; font-size: 11px; }
+.profile-save-row label { display: flex; align-items: center; gap: 4px; white-space: nowrap; color: #666; }
+.profile-name-input { flex: 1; font-size: 11px; padding: 3px 6px; border: 1px solid var(--border); border-radius: 4px; }

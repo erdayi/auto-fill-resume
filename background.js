@@ -2,7 +2,7 @@
 const api = globalThis.browser || globalThis.chrome;
 
 api.runtime.onInstalled.addListener(() => {
-  console.log('Resume Auto Filler v1.3 installed');
+  console.log('Resume Auto Filler v1.4 installed');
 });
 
 // Keyboard shortcut: Alt+Shift+F to fill current page

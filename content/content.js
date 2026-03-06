@@ -563,14 +563,15 @@
     // Detect custom select containers
     const customSelectors = [
       '.el-select', '.ant-select', '.ivu-select', '.arco-select',
-      '.t-select', '.n-select', '[class*="custom-select"]', '[class*="dropdown"]',
+      '.t-select', '.n-select', '.ant-cascader', '[class*="cascader"]',
+      '[class*="custom-select"]', '[class*="dropdown"]',
     ];
 
     const container = el.closest(customSelectors.join(','));
     if (!container) return false;
 
     // Click to open dropdown
-    const trigger = container.querySelector('input, .el-input__inner, .ant-select-selection-item, .ant-select-selection-search-input');
+    const trigger = container.querySelector('input, .el-input__inner, .ant-select-selection-item, .ant-select-selection-search-input, .ant-cascader-input');
     if (trigger) {
       trigger.click();
       trigger.focus();
@@ -584,23 +585,34 @@
 
       // Wait for dropdown options to appear
       setTimeout(() => {
+        const normalize = s => s.replace(/[省市区县自治区自治州特别行政区地区盟旗]/g, '').trim();
+        const normValue = normalize(value);
         const optionSelectors = [
           '.el-select-dropdown__item', '.ant-select-item-option',
           '.ivu-select-item', '.arco-select-option',
+          '.ant-cascader-menu-item', '[class*="cascader-node"]',
           '[class*="option"]', '[role="option"]', 'li',
         ];
 
         const dropdown = document.querySelector(
           '.el-select-dropdown, .ant-select-dropdown, .ivu-select-dropdown, ' +
-          '.arco-trigger-popup, [class*="dropdown-menu"]'
+          '.arco-trigger-popup, .ant-cascader-dropdown, .ant-cascader-menus, ' +
+          '[class*="dropdown-menu"], [class*="cascader-menu"]'
         );
 
         if (dropdown) {
           const options = dropdown.querySelectorAll(optionSelectors.join(','));
           for (const opt of options) {
             const optText = opt.textContent.trim();
-            if (optText === value || optText.includes(value) || value.includes(optText)) {
+            const normOpt = normalize(optText);
+            if (optText === value || optText.includes(value) || value.includes(optText) ||
+                (normOpt && normValue && (normOpt === normValue || normOpt.includes(normValue) || normValue.includes(normOpt)))) {
               opt.click();
+              // For cascading: if this opens a sub-menu, try to match next level
+              const parts = value.split(/[省市区\/\-]/).filter(Boolean);
+              if (parts.length > 1) {
+                setTimeout(() => clickCascaderLevel(parts.slice(1), 0), 300);
+              }
               return;
             }
           }
@@ -610,6 +622,30 @@
       return true;
     }
     return false;
+  }
+
+  // Click through cascader levels (province → city → district)
+  function clickCascaderLevel(remainingParts, attempt) {
+    if (!remainingParts.length || attempt > 5) return;
+    const normalize = s => s.replace(/[省市区县自治区自治州特别行政区地区盟旗]/g, '').trim();
+    const target = normalize(remainingParts[0]);
+    const menus = document.querySelectorAll(
+      '.ant-cascader-menu, .el-cascader-menu, [class*="cascader-menu"]'
+    );
+    // Find the last (rightmost) menu panel
+    const lastMenu = menus[menus.length - 1];
+    if (!lastMenu) return;
+    const items = lastMenu.querySelectorAll('li, [class*="cascader-node"], [class*="menu-item"]');
+    for (const item of items) {
+      const t = normalize(item.textContent.trim());
+      if (t === target || t.includes(target) || target.includes(t)) {
+        item.click();
+        if (remainingParts.length > 1) {
+          setTimeout(() => clickCascaderLevel(remainingParts.slice(1), 0), 300);
+        }
+        return;
+      }
+    }
   }
 
   // ================================================================
@@ -639,13 +675,49 @@
 
   function setSelectValue(el, value) {
     const opts = Array.from(el.options);
+    // Normalize: strip trailing 省/市/区/县/自治区 etc. for flexible matching
+    const normalize = s => s.replace(/[省市区县自治区自治州特别行政区地区盟旗]/g, '').trim();
+    const normVal = normalize(value);
+
     const match = opts.find(o => o.value === value) ||
                   opts.find(o => o.textContent.trim() === value) ||
                   opts.find(o => o.value && value.includes(o.value) && o.value !== '') ||
-                  opts.find(o => { const t = o.textContent.trim(); return t && (value.includes(t) || t.includes(value)) && t !== ''; });
-    if (match) { el.value = match.value; triggerEvents(el); return true; }
+                  opts.find(o => { const t = o.textContent.trim(); return t && (value.includes(t) || t.includes(value)) && t !== ''; }) ||
+                  // Fuzzy: strip province/city suffixes for matching (e.g. "湖南省" matches "湖南")
+                  opts.find(o => { const t = normalize(o.textContent.trim()); return t && normVal && (t === normVal || normVal.includes(t) || t.includes(normVal)) && t !== ''; });
+    if (match) {
+      el.value = match.value;
+      triggerEvents(el);
+      // For cascading selects (province→city→district), trigger change and wait for next level
+      handleCascadeNext(el, value);
+      return true;
+    }
     // Try custom select handler
     return handleCustomSelect(el, value);
+  }
+
+  // Handle cascading select chains (province → city → district)
+  function handleCascadeNext(el, fullValue) {
+    // If the value contains multiple levels separated by common delimiters
+    const parts = fullValue.split(/[省市区\/\-]/).filter(Boolean);
+    if (parts.length <= 1) return;
+
+    // Wait for cascading selects to populate after change event
+    setTimeout(() => {
+      const container = el.closest('.form-group, .form-item, .el-form-item, .ant-form-item, tr, .form-row, [class*="cascad"]') ||
+                        el.parentElement?.parentElement;
+      if (!container) return;
+      const selects = container.querySelectorAll('select');
+      const customSelects = container.querySelectorAll('.el-select, .ant-select, .ant-cascader, [class*="cascad"]');
+
+      // Find the next sibling select and try to set it
+      const allSelects = Array.from(selects);
+      const myIdx = allSelects.indexOf(el);
+      if (myIdx >= 0 && myIdx + 1 < allSelects.length && parts.length > 1) {
+        const nextSelect = allSelects[myIdx + 1];
+        setTimeout(() => setSelectValue(nextSelect, parts.slice(1).join('')), 300);
+      }
+    }, 300);
   }
 
   function setRadioValue(radios, value) {
@@ -1023,7 +1095,34 @@
   });
 
   // Async wrapper for fill (needed for "add button" clicks with delays)
-  async function fillFormAsync(data) {
+  // Derive birthday/gender/province from ID card number
+  function deriveFromIdCard(data) {
+    const id = data.idCard;
+    if (!id || id.length !== 18) return data;
+    const enriched = { ...data };
+    const y = id.substring(6, 10), m = id.substring(10, 12), d = id.substring(12, 14);
+    if (!enriched.birthday && +y >= 1900 && +y <= 2100) {
+      enriched.birthday = `${y}-${m}-${d}`;
+    }
+    const gc = parseInt(id.charAt(16), 10);
+    if (!enriched.gender && !isNaN(gc)) enriched.gender = gc % 2 === 1 ? '男' : '女';
+    const provMap = {
+      '11':'北京','12':'天津','13':'河北','14':'山西','15':'内蒙古',
+      '21':'辽宁','22':'吉林','23':'黑龙江','31':'上海','32':'江苏',
+      '33':'浙江','34':'安徽','35':'福建','36':'江西','37':'山东',
+      '41':'河南','42':'湖北','43':'湖南','44':'广东','45':'广西',
+      '46':'海南','50':'重庆','51':'四川','52':'贵州','53':'云南',
+      '54':'西藏','61':'陕西','62':'甘肃','63':'青海','64':'宁夏','65':'新疆',
+    };
+    const prov = provMap[id.substring(0, 2)];
+    if (prov && !enriched.hometown) enriched.hometown = prov;
+    if (prov && !enriched.hukou) enriched.hukou = prov;
+    return enriched;
+  }
+
+  async function fillFormAsync(originalData) {
+    // Enrich data: derive birthday/gender from ID card if available
+    const data = deriveFromIdCard(originalData);
     const elements = getAllFormElements();
     let filledCount = 0;
     const usedKeys = new Set();
