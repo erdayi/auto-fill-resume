@@ -120,6 +120,11 @@ async function syncToOnline(record) {
     return syncToBitable(record, syncSettings);
   }
 
+  // WeCom Sheet — write row to 企微文档
+  if (type === 'wecom_sheet') {
+    return syncToWecomSheet(record, syncSettings);
+  }
+
   // Webhook-based sync
   if (!syncSettings.webhookUrl) return;
 
@@ -228,5 +233,52 @@ async function syncToBitable(record, settings) {
     });
   } catch (e) {
     console.error('[Resume Filler] Bitable sync failed:', e.message);
+  }
+}
+
+// ============ WeCom Sheet Sync ============
+
+let _wecomTokenCache = { token: '', expiresAt: 0 };
+
+async function getWecomToken(corpId, corpSecret) {
+  if (_wecomTokenCache.token && Date.now() < _wecomTokenCache.expiresAt) {
+    return _wecomTokenCache.token;
+  }
+  const resp = await fetch(`https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=${encodeURIComponent(corpId)}&corpsecret=${encodeURIComponent(corpSecret)}`);
+  const data = await resp.json();
+  if (data.errcode !== 0) throw new Error('企微认证失败: ' + data.errmsg);
+  _wecomTokenCache = { token: data.access_token, expiresAt: Date.now() + (data.expires_in - 60) * 1000 };
+  return data.access_token;
+}
+
+async function syncToWecomSheet(record, settings) {
+  if (!settings.wecomCorpId || !settings.wecomCorpSecret || !settings.wecomDocId || !settings.wecomSheetId) return;
+
+  try {
+    const token = await getWecomToken(settings.wecomCorpId, settings.wecomCorpSecret);
+    const date = new Date(record.date).toLocaleString('zh-CN');
+
+    // 企微智能表格 API — 追加行
+    const url = `https://qyapi.weixin.qq.com/cgi-bin/wedoc/smartsheet/add_sheet_records?access_token=${token}`;
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        docid: settings.wecomDocId,
+        sheet_id: settings.wecomSheetId,
+        records: [{
+          values: {
+            '公司': [{ type: 'text', text: record.company || '' }],
+            '职位': [{ type: 'text', text: record.job || '' }],
+            '日期': [{ type: 'text', text: date }],
+            '状态': [{ type: 'text', text: record.status || '已投递' }],
+            '备注': [{ type: 'text', text: record.note || '' }],
+            '链接': [{ type: 'url', text: '查看', link: record.url || '' }],
+          },
+        }],
+      }),
+    });
+  } catch (e) {
+    console.error('[Resume Filler] WeCom sheet sync failed:', e.message);
   }
 }

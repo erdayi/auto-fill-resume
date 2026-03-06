@@ -647,9 +647,9 @@ loadHistory();
 // ============ Sync & Detection Settings ============
 function toggleSyncUI() {
   const type = document.getElementById('syncType').value;
-  const isBitable = type === 'feishu_bitable';
-  document.getElementById('bitableConfig').classList.toggle('hidden', !isBitable);
-  document.getElementById('webhookConfig').classList.toggle('hidden', isBitable);
+  document.getElementById('bitableConfig').classList.toggle('hidden', type !== 'feishu_bitable');
+  document.getElementById('wecomSheetConfig').classList.toggle('hidden', type !== 'wecom_sheet');
+  document.getElementById('webhookConfig').classList.toggle('hidden', type === 'feishu_bitable' || type === 'wecom_sheet');
 }
 
 function loadSyncSettings() {
@@ -661,24 +661,39 @@ function loadSyncSettings() {
     document.getElementById('feishuAppId').value = s.feishuAppId || '';
     document.getElementById('feishuAppSecret').value = s.feishuAppSecret || '';
     document.getElementById('feishuBitableUrl').value = s.feishuBitableUrl || '';
+    document.getElementById('wecomCorpId').value = s.wecomCorpId || '';
+    document.getElementById('wecomCorpSecret').value = s.wecomCorpSecret || '';
+    document.getElementById('wecomDocUrl').value = s.wecomDocUrl || '';
+    document.getElementById('wecomSheetId').value = s.wecomSheetId || '';
     document.getElementById('customSubmitKeywords').value = (result.submitKeywords || []).join(',');
     toggleSyncUI();
   });
 }
 
 function saveSyncSettings() {
-  const settings = {
-    type: document.getElementById('syncType').value,
-    webhookUrl: document.getElementById('syncWebhookUrl').value.trim(),
-    enabled: document.getElementById('syncEnabled').checked,
-    feishuAppId: document.getElementById('feishuAppId').value.trim(),
-    feishuAppSecret: document.getElementById('feishuAppSecret').value.trim(),
-    feishuBitableUrl: document.getElementById('feishuBitableUrl').value.trim(),
-  };
-  // Parse bitable URL → extract app_token and table_id
-  const bitableMatch = settings.feishuBitableUrl.match(/\/base\/([A-Za-z0-9]+)/);
-  if (bitableMatch) settings.bitableAppToken = bitableMatch[1];
-  api.storage.local.set({ syncSettings: settings });
+  // Read existing settings first to preserve table IDs etc.
+  api.storage.local.get('syncSettings', (result) => {
+    const prev = result.syncSettings || {};
+    const settings = {
+      ...prev,
+      type: document.getElementById('syncType').value,
+      webhookUrl: document.getElementById('syncWebhookUrl').value.trim(),
+      enabled: document.getElementById('syncEnabled').checked,
+      feishuAppId: document.getElementById('feishuAppId').value.trim(),
+      feishuAppSecret: document.getElementById('feishuAppSecret').value.trim(),
+      feishuBitableUrl: document.getElementById('feishuBitableUrl').value.trim(),
+      wecomCorpId: document.getElementById('wecomCorpId').value.trim(),
+      wecomCorpSecret: document.getElementById('wecomCorpSecret').value.trim(),
+      wecomDocUrl: document.getElementById('wecomDocUrl').value.trim(),
+      wecomSheetId: document.getElementById('wecomSheetId').value.trim(),
+    };
+    const bitableMatch = settings.feishuBitableUrl.match(/\/base\/([A-Za-z0-9]+)/);
+    if (bitableMatch) settings.bitableAppToken = bitableMatch[1];
+    // Parse wecom doc URL
+    const wecomMatch = settings.wecomDocUrl.match(/smartsheet\/([A-Za-z0-9_-]+)/);
+    if (wecomMatch) settings.wecomDocId = wecomMatch[1];
+    api.storage.local.set({ syncSettings: settings });
+  });
 }
 
 document.getElementById('syncType').addEventListener('change', () => { toggleSyncUI(); saveSyncSettings(); });
@@ -687,6 +702,10 @@ document.getElementById('syncEnabled').addEventListener('change', saveSyncSettin
 document.getElementById('feishuAppId').addEventListener('change', saveSyncSettings);
 document.getElementById('feishuAppSecret').addEventListener('change', saveSyncSettings);
 document.getElementById('feishuBitableUrl').addEventListener('change', saveSyncSettings);
+document.getElementById('wecomCorpId').addEventListener('change', saveSyncSettings);
+document.getElementById('wecomCorpSecret').addEventListener('change', saveSyncSettings);
+document.getElementById('wecomDocUrl').addEventListener('change', saveSyncSettings);
+document.getElementById('wecomSheetId').addEventListener('change', saveSyncSettings);
 
 // Custom submit keywords
 document.getElementById('customSubmitKeywords').addEventListener('change', (e) => {
@@ -781,9 +800,45 @@ document.getElementById('bitableInit').addEventListener('click', async () => {
   }
 });
 
+// WeCom Sheet help
+document.getElementById('wecomSheetHelp').addEventListener('click', (e) => {
+  e.preventDefault();
+  alert('企微文档表格配置步骤：\n\n' +
+    '1. 企业微信管理后台 → 应用管理 → 创建自建应用\n' +
+    '2. 获取 Corp ID（企业信息页）和应用 Secret\n' +
+    '3. 应用权限中添加"文档"相关权限\n' +
+    '4. 在企业微信中创建一个智能表格\n' +
+    '5. 复制表格浏览器地址粘贴到下方\n' +
+    '6. 填入 Sheet ID（表格内工作表的标识）\n' +
+    '7. 勾选"启用自动同步"即可');
+});
+
+// WeCom Sheet init — add header row
+document.getElementById('wecomSheetInit').addEventListener('click', async () => {
+  saveSyncSettings();
+  // Wait a tick for saveSyncSettings callback
+  await new Promise(r => setTimeout(r, 200));
+  const { syncSettings } = await new Promise(r => api.storage.local.get('syncSettings', r));
+  if (!syncSettings?.wecomCorpId || !syncSettings?.wecomCorpSecret) {
+    showToast('请先填写 Corp ID 和 Secret', 'error'); return;
+  }
+  try {
+    // Get access token
+    const tokenResp = await fetch(`https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=${encodeURIComponent(syncSettings.wecomCorpId)}&corpsecret=${encodeURIComponent(syncSettings.wecomCorpSecret)}`);
+    const tokenData = await tokenResp.json();
+    if (tokenData.errcode !== 0) throw new Error(tokenData.errmsg);
+    showToast('企微认证成功！请手动在表格首行添加表头：公司、职位、日期、状态、备注、链接', 'success');
+    // Note: 企微文档 API 较复杂，需要手动创建表头
+    // 自动写入会追加行数据
+  } catch (e) {
+    showToast('认证失败: ' + e.message, 'error');
+  }
+});
+
 // Test sync
 document.getElementById('syncTest').addEventListener('click', async () => {
   saveSyncSettings();
+  await new Promise(r => setTimeout(r, 200));
   const { syncSettings } = await new Promise(r => api.storage.local.get('syncSettings', r));
   const type = syncSettings?.type;
 
@@ -809,6 +864,16 @@ document.getElementById('syncTest').addEventListener('click', async () => {
       const data = await resp.json();
       if (data.code === 0) showToast('测试成功！请查看飞书表格', 'success');
       else throw new Error(data.msg);
+    } catch(e) { showToast('测试失败: ' + e.message, 'error'); }
+  } else if (type === 'wecom_sheet') {
+    if (!syncSettings?.wecomCorpId || !syncSettings?.wecomCorpSecret) {
+      showToast('请先填写 Corp ID 和 Secret', 'error'); return;
+    }
+    try {
+      const tokenResp = await fetch(`https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=${encodeURIComponent(syncSettings.wecomCorpId)}&corpsecret=${encodeURIComponent(syncSettings.wecomCorpSecret)}`);
+      const tokenData = await tokenResp.json();
+      if (tokenData.errcode !== 0) throw new Error(tokenData.errmsg);
+      showToast('企微认证成功！token有效', 'success');
     } catch(e) { showToast('测试失败: ' + e.message, 'error'); }
   } else {
     // Webhook test
