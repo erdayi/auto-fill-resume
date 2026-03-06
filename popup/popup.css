@@ -328,6 +328,21 @@ body {
 .history-empty p { margin-top: 6px; font-size: 13px; }
 .history-empty .hint { font-size: 11px; color: #c0c4cc; margin-top: 2px; }
 
+/* Sync Settings */
+.sync-settings { margin-top: 10px; border-top: 1px solid var(--border); }
+.sync-summary {
+  font-size: 11px; color: var(--text-secondary); cursor: pointer;
+  padding: 8px 0 4px; user-select: none; list-style: none;
+}
+.sync-summary::before { content: '⚙ '; }
+.sync-summary:hover { color: var(--primary); }
+.sync-body { padding: 6px 0; animation: fadeIn 0.2s ease; }
+.sync-tip { font-size: 10px; color: #91959a; margin-bottom: 6px; }
+.sync-toggle {
+  font-size: 11px; color: var(--text); display: flex; align-items: center; gap: 4px; cursor: pointer;
+}
+.sync-toggle input { margin: 0; }
+
 /* Loading */
 .btn.loading { position: relative; color: transparent !important; pointer-events: none; }
 .btn.loading::after {

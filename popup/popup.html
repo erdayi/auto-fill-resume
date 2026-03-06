@@ -338,8 +338,34 @@
         <div id="historyEmpty" class="history-empty">
           <svg width="32" height="32" viewBox="0 0 16 16" fill="#d1d5db"><path d="M2 2h12v2H2V2zm0 4h12v2H2V6zm0 4h12v2H2v-2z"/></svg>
           <p>暂无投递记录</p>
-          <p class="hint">填写表单后点击"记录投递"自动添加</p>
+          <p class="hint">点击求职网站的"投递"按钮时自动记录</p>
         </div>
+        <!-- Sync Settings -->
+        <details class="sync-settings">
+          <summary class="sync-summary">自动同步设置</summary>
+          <div class="sync-body">
+            <div class="sync-tip">投递时自动推送到飞书/钉钉/企微，实时同步无需导出</div>
+            <div class="form-row" style="gap:6px">
+              <div class="form-group" style="flex:0 0 90px">
+                <label>平台</label>
+                <select id="syncType">
+                  <option value="feishu">飞书机器人</option>
+                  <option value="dingtalk">钉钉机器人</option>
+                  <option value="wecom">企业微信</option>
+                  <option value="custom">自定义Webhook</option>
+                </select>
+              </div>
+              <div class="form-group" style="flex:1">
+                <label>Webhook URL</label>
+                <input type="text" id="syncWebhookUrl" placeholder="粘贴机器人的 Webhook 地址">
+              </div>
+            </div>
+            <div class="form-row" style="gap:6px;align-items:center">
+              <label class="sync-toggle"><input type="checkbox" id="syncEnabled"> 启用自动同步</label>
+              <button id="syncTest" class="btn btn-outline" style="font-size:11px;padding:3px 10px">测试</button>
+            </div>
+          </div>
+        </details>
       </div>
 
     </div>

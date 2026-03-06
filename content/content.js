@@ -1258,4 +1258,54 @@
     window.addEventListener('load', () => setTimeout(restoreFormSnapshot, 500));
   }
 
+  // ================================================================
+  // SECTION 14: AUTO-DETECT SUBMISSION
+  // ================================================================
+
+  const SUBMIT_KEYWORDS = [
+    '投递', '立即投递', '申请职位', '投简历', '申请', '提交申请', '一键投递',
+    '立即申请', '我要投递', '确认投递', '投递简历', '确定投递',
+    'submit', 'apply', 'apply now', 'submit application',
+  ];
+
+  function isSubmitButton(el) {
+    const tag = el.tagName;
+    if (tag !== 'BUTTON' && tag !== 'A' && tag !== 'INPUT' && tag !== 'DIV' && tag !== 'SPAN') return false;
+    const text = (el.textContent || el.value || '').trim().toLowerCase();
+    if (text.length > 20) return false;
+    return SUBMIT_KEYWORDS.some(kw => text.includes(kw));
+  }
+
+  let _lastSubmitTime = 0;
+  document.addEventListener('click', (e) => {
+    // Check clicked element and its ancestors (up to 3 levels)
+    let target = e.target;
+    let found = false;
+    for (let i = 0; i < 4 && target && target !== document.body; i++) {
+      if (isSubmitButton(target)) { found = true; break; }
+      target = target.parentElement;
+    }
+    if (!found) return;
+
+    // Debounce: ignore rapid clicks
+    if (Date.now() - _lastSubmitTime < 5000) return;
+    _lastSubmitTime = Date.now();
+
+    // Extract page info and send to background/popup
+    const info = extractPageInfo();
+    if (!info.company && !info.job) return;
+
+    api.runtime.sendMessage({
+      action: 'autoRecordSubmit',
+      data: {
+        company: info.company || '未知公司',
+        job: info.job || '',
+        url: location.href,
+        date: Date.now(),
+        status: '已投递',
+        note: '',
+      }
+    });
+  }, true);
+
 })();

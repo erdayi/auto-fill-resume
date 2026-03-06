@@ -642,6 +642,61 @@ document.getElementById('addHistory').addEventListener('click', async () => {
 
 loadHistory();
 
+// ============ Sync Settings ============
+function loadSyncSettings() {
+  api.storage.local.get('syncSettings', (result) => {
+    const s = result.syncSettings || {};
+    document.getElementById('syncType').value = s.type || 'feishu';
+    document.getElementById('syncWebhookUrl').value = s.webhookUrl || '';
+    document.getElementById('syncEnabled').checked = !!s.enabled;
+  });
+}
+
+function saveSyncSettings() {
+  const settings = {
+    type: document.getElementById('syncType').value,
+    webhookUrl: document.getElementById('syncWebhookUrl').value.trim(),
+    enabled: document.getElementById('syncEnabled').checked,
+  };
+  api.storage.local.set({ syncSettings: settings });
+}
+
+document.getElementById('syncType').addEventListener('change', saveSyncSettings);
+document.getElementById('syncWebhookUrl').addEventListener('change', saveSyncSettings);
+document.getElementById('syncEnabled').addEventListener('change', saveSyncSettings);
+
+// Test webhook
+document.getElementById('syncTest').addEventListener('click', async () => {
+  saveSyncSettings();
+  const url = document.getElementById('syncWebhookUrl').value.trim();
+  if (!url) { showToast('请填写 Webhook URL', 'error'); return; }
+  const type = document.getElementById('syncType').value;
+  const testRecord = { company: '测试公司', job: '测试职位', url: 'https://example.com', date: Date.now(), status: '已投递', note: '这是一条测试消息' };
+
+  try {
+    let body;
+    if (type === 'feishu') {
+      body = JSON.stringify({ msg_type: 'text', content: { text: `📋 投递同步测试\n公司: ${testRecord.company}\n职位: ${testRecord.job}\n状态: ${testRecord.status}` } });
+    } else if (type === 'dingtalk') {
+      body = JSON.stringify({ msgtype: 'text', text: { content: `📋 投递同步测试\n公司: ${testRecord.company}\n职位: ${testRecord.job}` } });
+    } else if (type === 'wecom') {
+      body = JSON.stringify({ msgtype: 'text', text: { content: `📋 投递同步测试\n公司: ${testRecord.company}\n职位: ${testRecord.job}` } });
+    } else {
+      body = JSON.stringify(testRecord);
+    }
+    const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+    if (resp.ok) {
+      showToast('测试成功，请检查消息', 'success');
+    } else {
+      showToast(`测试失败: HTTP ${resp.status}`, 'error');
+    }
+  } catch (e) {
+    showToast('测试失败: ' + e.message, 'error');
+  }
+});
+
+loadSyncSettings();
+
 // ============ Resume Upload & AI Parse ============
 let parsedResumeData = null;
 
