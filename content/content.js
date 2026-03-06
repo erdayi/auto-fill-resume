@@ -857,6 +857,89 @@
   }
 
   // ================================================================
+  // SECTION 12: PAGE INFO EXTRACTION (for application history)
+  // ================================================================
+
+  function extractPageInfo() {
+    const info = { company: '', job: '' };
+
+    // 1. Try Open Graph / meta tags
+    const ogSiteName = document.querySelector('meta[property="og:site_name"]');
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) {
+      const t = ogTitle.getAttribute('content') || '';
+      // Pattern: "岗位-公司" or "公司-岗位"
+      const parts = t.split(/[-–—|_]/);
+      if (parts.length >= 2) {
+        info.job = parts[0].trim().substring(0, 40);
+        info.company = parts[1].trim().substring(0, 40);
+      }
+    }
+    if (ogSiteName && !info.company) {
+      info.company = (ogSiteName.getAttribute('content') || '').substring(0, 40);
+    }
+
+    // 2. Try common job site selectors
+    const companySelectors = [
+      '.company-name', '.company_name', '.employer-name', '.corp-name',
+      '[class*="company-name"]', '[class*="companyName"]',
+      '.job-company', '.com-name', '.company', '.firm-name',
+      'h2.name', '.recruiter-company',
+      // Major Chinese job sites
+      '.job-sec .cname', '.com_title', '.company-title-text',
+    ];
+    const jobSelectors = [
+      '.job-name', '.job_name', '.position-name', '.job-title',
+      '[class*="job-name"]', '[class*="jobName"]', '[class*="position-name"]',
+      '.title-info h1', '.job h1', '.position h1',
+      // Major Chinese job sites
+      '.job-sec .name', '.pos-title', '.position-title',
+    ];
+
+    if (!info.company) {
+      for (const sel of companySelectors) {
+        const el = document.querySelector(sel);
+        if (el && el.textContent.trim()) {
+          info.company = el.textContent.trim().substring(0, 40);
+          break;
+        }
+      }
+    }
+
+    if (!info.job) {
+      for (const sel of jobSelectors) {
+        const el = document.querySelector(sel);
+        if (el && el.textContent.trim()) {
+          info.job = el.textContent.trim().substring(0, 40);
+          break;
+        }
+      }
+    }
+
+    // 3. Try h1 as job title fallback
+    if (!info.job) {
+      const h1 = document.querySelector('h1');
+      if (h1) info.job = h1.textContent.trim().substring(0, 40);
+    }
+
+    // 4. Fallback to page title parsing
+    if (!info.company || !info.job) {
+      const title = document.title;
+      // Common patterns: "岗位名称_公司名称-招聘平台" or "公司-岗位"
+      const cleaned = title.replace(/[-_|]?(招聘|求职|BOSS直聘|猎聘|智联|前程无忧|拉勾|牛客|实习僧|官网|校招|社招).*$/g, '');
+      const parts = cleaned.split(/[-–—|_]/);
+      if (parts.length >= 2) {
+        if (!info.job) info.job = parts[0].trim().substring(0, 40);
+        if (!info.company) info.company = parts[1].trim().substring(0, 40);
+      } else if (!info.company) {
+        info.company = cleaned.trim().substring(0, 40);
+      }
+    }
+
+    return info;
+  }
+
+  // ================================================================
   // MESSAGE LISTENER
   // ================================================================
 
@@ -880,6 +963,15 @@
       } catch (err) {
         sendResponse({ success: false, fields: [] });
       }
+      return true;
+    }
+    if (msg.action === 'extractPageInfo') {
+      try {
+        sendResponse({ success: true, info: extractPageInfo() });
+      } catch (err) {
+        sendResponse({ success: false, info: {} });
+      }
+      return true;
     }
     return true;
   });

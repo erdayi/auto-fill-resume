@@ -530,18 +530,6 @@ document.getElementById('btnRecord').addEventListener('click', async () => {
     if (!tab) { showToast('无法获取页面信息', 'error'); return; }
 
     const url = tab.url || '';
-    const title = tab.title || '';
-
-    // Try to extract company/job from page title
-    let company = '', job = '';
-    // Common patterns: "岗位名称-公司名称" or "公司-岗位" or just title
-    const parts = title.split(/[-–—|_]/);
-    if (parts.length >= 2) {
-      company = parts[1].trim().substring(0, 30);
-      job = parts[0].trim().substring(0, 30);
-    } else {
-      company = title.substring(0, 30);
-    }
 
     // Check for duplicate (same URL within last hour)
     const oneHourAgo = Date.now() - 3600000;
@@ -551,8 +539,41 @@ document.getElementById('btnRecord').addEventListener('click', async () => {
       return;
     }
 
+    // Inject content script and extract page info
+    let company = '', job = '';
+    try {
+      await api.scripting.executeScript({ target: { tabId: tab.id }, files: ['content/content.js'] });
+    } catch(e) {}
+
+    const pageInfo = await new Promise((resolve) => {
+      api.tabs.sendMessage(tab.id, { action: 'extractPageInfo' }, (response) => {
+        if (api.runtime.lastError || !response || !response.success) {
+          resolve(null);
+        } else {
+          resolve(response.info);
+        }
+      });
+    });
+
+    if (pageInfo) {
+      company = pageInfo.company;
+      job = pageInfo.job;
+    }
+
+    // Fallback: parse from tab title
+    if (!company && !job) {
+      const title = tab.title || '';
+      const parts = title.split(/[-–—|_]/);
+      if (parts.length >= 2) {
+        job = parts[0].trim().substring(0, 40);
+        company = parts[1].trim().substring(0, 40);
+      } else {
+        company = title.substring(0, 40);
+      }
+    }
+
     historyData.unshift({
-      company,
+      company: company || '未知公司',
       job,
       url,
       date: Date.now(),
