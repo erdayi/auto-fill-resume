@@ -1262,18 +1262,38 @@
   // SECTION 14: AUTO-DETECT SUBMISSION
   // ================================================================
 
-  const SUBMIT_KEYWORDS = [
+  const DEFAULT_SUBMIT_KEYWORDS = [
     '投递', '立即投递', '申请职位', '投简历', '申请', '提交申请', '一键投递',
-    '立即申请', '我要投递', '确认投递', '投递简历', '确定投递',
-    'submit', 'apply', 'apply now', 'submit application',
+    '立即申请', '我要投递', '确认投递', '投递简历', '确定投递', '马上投递',
+    '投递岗位', '确认申请', '提交简历', '发送简历', '我感兴趣', '立即沟通',
+    '打招呼', '极速投递', '投个简历', '简历投递', '快速申请',
+    'submit', 'apply', 'apply now', 'submit application', 'quick apply',
   ];
+
+  let _submitKeywords = [...DEFAULT_SUBMIT_KEYWORDS];
+
+  // Load user custom keywords
+  api.storage.local.get('submitKeywords', (result) => {
+    if (result.submitKeywords && result.submitKeywords.length > 0) {
+      _submitKeywords = [...DEFAULT_SUBMIT_KEYWORDS, ...result.submitKeywords];
+    }
+  });
+
+  // Listen for keyword updates from popup
+  api.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    if (msg.action === 'updateSubmitKeywords') {
+      _submitKeywords = [...DEFAULT_SUBMIT_KEYWORDS, ...(msg.keywords || [])];
+      sendResponse({ success: true });
+      return true;
+    }
+  });
 
   function isSubmitButton(el) {
     const tag = el.tagName;
     if (tag !== 'BUTTON' && tag !== 'A' && tag !== 'INPUT' && tag !== 'DIV' && tag !== 'SPAN') return false;
     const text = (el.textContent || el.value || '').trim().toLowerCase();
     if (text.length > 20) return false;
-    return SUBMIT_KEYWORDS.some(kw => text.includes(kw));
+    return _submitKeywords.some(kw => text.includes(kw));
   }
 
   let _lastSubmitTime = 0;

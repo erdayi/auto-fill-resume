@@ -340,10 +340,15 @@
           <p>暂无投递记录</p>
           <p class="hint">点击求职网站的"投递"按钮时自动记录</p>
         </div>
-        <!-- Sync Settings -->
+        <!-- Sync & Detection Settings -->
         <details class="sync-settings">
-          <summary class="sync-summary">自动同步设置</summary>
+          <summary class="sync-summary">投递检测 & 同步设置</summary>
           <div class="sync-body">
+            <div class="form-group">
+              <label>投递按钮关键词 <span style="color:#aaa;font-weight:400">(逗号分隔，补充未识别的按钮文字)</span></label>
+              <input type="text" id="customSubmitKeywords" placeholder="例：沟通职位,发起聊天,我要应聘">
+            </div>
+            <div style="border-top:1px solid var(--border);margin:8px 0;"></div>
             <div class="sync-tip">投递时自动推送到飞书/钉钉/企微，实时同步无需导出</div>
             <div class="form-row" style="gap:6px">
               <div class="form-group" style="flex:0 0 90px">

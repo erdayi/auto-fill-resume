@@ -642,13 +642,14 @@ document.getElementById('addHistory').addEventListener('click', async () => {
 
 loadHistory();
 
-// ============ Sync Settings ============
+// ============ Sync & Detection Settings ============
 function loadSyncSettings() {
-  api.storage.local.get('syncSettings', (result) => {
+  api.storage.local.get(['syncSettings', 'submitKeywords'], (result) => {
     const s = result.syncSettings || {};
     document.getElementById('syncType').value = s.type || 'feishu';
     document.getElementById('syncWebhookUrl').value = s.webhookUrl || '';
     document.getElementById('syncEnabled').checked = !!s.enabled;
+    document.getElementById('customSubmitKeywords').value = (result.submitKeywords || []).join(',');
   });
 }
 
@@ -664,6 +665,18 @@ function saveSyncSettings() {
 document.getElementById('syncType').addEventListener('change', saveSyncSettings);
 document.getElementById('syncWebhookUrl').addEventListener('change', saveSyncSettings);
 document.getElementById('syncEnabled').addEventListener('change', saveSyncSettings);
+
+// Custom submit keywords
+document.getElementById('customSubmitKeywords').addEventListener('change', (e) => {
+  const keywords = e.target.value.split(/[,，]/).map(s => s.trim().toLowerCase()).filter(Boolean);
+  api.storage.local.set({ submitKeywords: keywords });
+  // Notify all tabs
+  api.tabs.query({}, (tabs) => {
+    tabs.forEach(tab => {
+      api.tabs.sendMessage(tab.id, { action: 'updateSubmitKeywords', keywords }).catch(() => {});
+    });
+  });
+});
 
 // Test webhook
 document.getElementById('syncTest').addEventListener('click', async () => {
