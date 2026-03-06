@@ -633,12 +633,32 @@ document.getElementById('btnUploadResume').addEventListener('click', () => {
   // Load saved API settings
   api.storage.local.get('llmSettings', (result) => {
     if (result.llmSettings) {
-      document.getElementById('llmProvider').value = result.llmSettings.provider || 'claude';
+      document.getElementById('llmProvider').value = result.llmSettings.provider || 'deepseek';
       document.getElementById('llmApiKey').value = result.llmSettings.apiKey || '';
       document.getElementById('llmModel').value = result.llmSettings.model || '';
+      document.getElementById('llmCustomUrl').value = result.llmSettings.customUrl || '';
     }
+    updateProviderHints();
   });
 });
+
+// Provider hints
+function updateProviderHints() {
+  const provider = document.getElementById('llmProvider').value;
+  const config = typeof LLM_PROVIDERS !== 'undefined' ? LLM_PROVIDERS[provider] : null;
+  const hintEl = document.getElementById('llmKeyHint');
+  const linkEl = document.getElementById('llmKeyLink');
+  const customGroup = document.getElementById('customUrlGroup');
+  const modelInput = document.getElementById('llmModel');
+  if (config) {
+    hintEl.textContent = config.keyHint || '';
+    if (config.keyUrl) { linkEl.href = config.keyUrl; linkEl.classList.remove('hidden'); }
+    else { linkEl.classList.add('hidden'); }
+    modelInput.placeholder = config.defaultModel ? '默认: ' + config.defaultModel : '';
+  }
+  customGroup.classList.toggle('hidden', provider !== 'custom');
+}
+document.getElementById('llmProvider').addEventListener('change', updateProviderHints);
 
 // Close modal
 document.getElementById('closeResumeModal').addEventListener('click', () => {
@@ -719,14 +739,21 @@ document.getElementById('btnParseResume').addEventListener('click', async () => 
       const apiKey = document.getElementById('llmApiKey').value.trim();
       const provider = document.getElementById('llmProvider').value;
       const model = document.getElementById('llmModel').value.trim();
+      const customUrl = document.getElementById('llmCustomUrl').value.trim();
       if (!apiKey) {
         document.getElementById('resumeLoading').classList.add('hidden');
         document.getElementById('resumeStep1').classList.remove('hidden');
         showToast('AI 模式需要填写 API Key', 'error');
         return;
       }
-      api.storage.local.set({ llmSettings: { provider, apiKey, model } });
-      parsedResumeData = await parseResumeWithLLM(text, apiKey, provider, model);
+      if (provider === 'custom' && !customUrl) {
+        document.getElementById('resumeLoading').classList.add('hidden');
+        document.getElementById('resumeStep1').classList.remove('hidden');
+        showToast('自定义模式需要填写 API 地址', 'error');
+        return;
+      }
+      api.storage.local.set({ llmSettings: { provider, apiKey, model, customUrl } });
+      parsedResumeData = await parseResumeWithLLM(text, apiKey, provider, model, customUrl);
     }
 
     renderParsePreview(parsedResumeData);

@@ -6,7 +6,13 @@
   "permissions": ["storage", "activeTab", "scripting"],
   "host_permissions": [
     "https://api.anthropic.com/*",
-    "https://api.openai.com/*"
+    "https://api.openai.com/*",
+    "https://api.deepseek.com/*",
+    "https://api.moonshot.cn/*",
+    "https://dashscope.aliyuncs.com/*",
+    "https://open.bigmodel.cn/*",
+    "https://api.siliconflow.cn/*",
+    "https://ark.cn-beijing.volces.com/*"
   ],
   "action": {
     "default_popup": "popup/popup.html",

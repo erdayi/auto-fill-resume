@@ -389,6 +389,8 @@ body {
 .parse-mode-tab:hover:not(.active) { color: var(--text); }
 .ai-settings { margin-bottom: 8px; animation: fadeIn 0.2s ease; }
 .ai-settings.hidden { display: none; }
+.hidden { display: none !important; }
+.key-hint { padding: 0 2px; line-height: 1.4; }
 
 /* Upload Zone */
 .upload-zone {

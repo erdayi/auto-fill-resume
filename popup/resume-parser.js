@@ -201,63 +201,136 @@ const RESUME_PARSE_PROMPT = `你是一个精确的简历解析器。请将以下
 简历文本：
 `;
 
-async function parseResumeWithLLM(text, apiKey, provider = 'openai', model = '') {
-  const truncated = text.substring(0, 12000); // Limit token usage
+// Provider configurations — all OpenAI-compatible ones share the same call logic
+const LLM_PROVIDERS = {
+  deepseek: {
+    name: 'DeepSeek',
+    baseUrl: 'https://api.deepseek.com/v1/chat/completions',
+    defaultModel: 'deepseek-chat',
+    keyHint: '去 platform.deepseek.com 获取，新用户送 500 万 tokens',
+    keyUrl: 'https://platform.deepseek.com/api_keys',
+  },
+  kimi: {
+    name: 'Kimi (月之暗面)',
+    baseUrl: 'https://api.moonshot.cn/v1/chat/completions',
+    defaultModel: 'moonshot-v1-8k',
+    keyHint: '去 platform.moonshot.cn 获取',
+    keyUrl: 'https://platform.moonshot.cn/console/api-keys',
+  },
+  qwen: {
+    name: '通义千问 (阿里)',
+    baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
+    defaultModel: 'qwen-turbo',
+    keyHint: '去 dashscope.console.aliyun.com 获取，送免费额度',
+    keyUrl: 'https://dashscope.console.aliyun.com/apiKey',
+  },
+  glm: {
+    name: '智谱 GLM',
+    baseUrl: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
+    defaultModel: 'glm-4-flash',
+    keyHint: '去 open.bigmodel.cn 获取，glm-4-flash 免费',
+    keyUrl: 'https://open.bigmodel.cn/usercenter/apikeys',
+  },
+  siliconflow: {
+    name: '硅基流动 SiliconFlow',
+    baseUrl: 'https://api.siliconflow.cn/v1/chat/completions',
+    defaultModel: 'Qwen/Qwen2.5-7B-Instruct',
+    keyHint: '去 siliconflow.cn 获取，多模型免费调用',
+    keyUrl: 'https://cloud.siliconflow.cn/account/ak',
+  },
+  doubao: {
+    name: '豆包 (字节)',
+    baseUrl: 'https://ark.cn-beijing.volces.com/api/v3/chat/completions',
+    defaultModel: 'doubao-lite-32k',
+    keyHint: '去火山引擎控制台获取',
+    keyUrl: 'https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey',
+  },
+  openai: {
+    name: 'OpenAI',
+    baseUrl: 'https://api.openai.com/v1/chat/completions',
+    defaultModel: 'gpt-4o-mini',
+    keyHint: '去 platform.openai.com 获取',
+    keyUrl: 'https://platform.openai.com/api-keys',
+  },
+  claude: {
+    name: 'Claude (Anthropic)',
+    baseUrl: '__claude__', // Special handling
+    defaultModel: 'claude-haiku-4-5-20251001',
+    keyHint: '去 console.anthropic.com 获取',
+    keyUrl: 'https://console.anthropic.com/settings/keys',
+  },
+  custom: {
+    name: '自定义 (兼容 OpenAI)',
+    baseUrl: '',
+    defaultModel: '',
+    keyHint: '填写兼容 OpenAI 格式的 API 地址',
+    keyUrl: '',
+  },
+};
 
+async function parseResumeWithLLM(text, apiKey, provider = 'deepseek', model = '', customUrl = '') {
+  const truncated = text.substring(0, 12000);
+  const config = LLM_PROVIDERS[provider];
+  if (!config) throw new Error('不支持的 API 提供商');
+
+  // Claude has a different API format
   if (provider === 'claude') {
-    const useModel = model || 'claude-haiku-4-5-20251001';
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: useModel,
-        max_tokens: 4096,
-        messages: [{ role: 'user', content: RESUME_PARSE_PROMPT + truncated }],
-      }),
-    });
-    if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      throw new Error(err.error?.message || `API 错误: ${resp.status}`);
-    }
-    const data = await resp.json();
-    const content = data.content?.[0]?.text || '';
-    return extractJSON(content);
+    return callClaudeAPI(truncated, apiKey, model || config.defaultModel);
   }
 
-  if (provider === 'openai') {
-    const useModel = model || 'gpt-4o-mini';
-    const baseUrl = 'https://api.openai.com/v1/chat/completions';
-    const resp = await fetch(baseUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: useModel,
-        messages: [
-          { role: 'system', content: '你是一个精确的简历解析器，只输出 JSON。' },
-          { role: 'user', content: RESUME_PARSE_PROMPT + truncated },
-        ],
-        temperature: 0.1,
-        max_tokens: 4096,
-      }),
-    });
-    if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      throw new Error(err.error?.message || `API 错误: ${resp.status}`);
-    }
-    const data = await resp.json();
-    const content = data.choices?.[0]?.message?.content || '';
-    return extractJSON(content);
-  }
+  // All others use OpenAI-compatible format
+  const baseUrl = provider === 'custom' ? customUrl : config.baseUrl;
+  if (!baseUrl) throw new Error('请填写 API 地址');
 
-  throw new Error('不支持的 API 提供商');
+  const useModel = model || config.defaultModel;
+  const resp = await fetch(baseUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: useModel,
+      messages: [
+        { role: 'system', content: '你是一个精确的简历解析器，只输出 JSON，不要任何其他文字。' },
+        { role: 'user', content: RESUME_PARSE_PROMPT + truncated },
+      ],
+      temperature: 0.1,
+      max_tokens: 4096,
+    }),
+  });
+
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error?.message || `API 错误: ${resp.status}`);
+  }
+  const data = await resp.json();
+  const content = data.choices?.[0]?.message?.content || '';
+  return extractJSON(content);
+}
+
+async function callClaudeAPI(text, apiKey, model) {
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 4096,
+      messages: [{ role: 'user', content: RESUME_PARSE_PROMPT + text }],
+    }),
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error?.message || `API 错误: ${resp.status}`);
+  }
+  const data = await resp.json();
+  const content = data.content?.[0]?.text || '';
+  return extractJSON(content);
 }
 
 function extractJSON(text) {

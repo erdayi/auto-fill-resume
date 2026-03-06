@@ -394,18 +394,30 @@
             <div class="form-group" style="flex:0 0 110px">
               <label>AI 提供商</label>
               <select id="llmProvider">
-                <option value="claude">Claude</option>
+                <option value="deepseek">DeepSeek</option>
+                <option value="kimi">Kimi (月之暗面)</option>
+                <option value="qwen">通义千问 (阿里)</option>
+                <option value="glm">智谱 GLM</option>
+                <option value="siliconflow">硅基流动</option>
+                <option value="doubao">豆包 (字节)</option>
                 <option value="openai">OpenAI</option>
+                <option value="claude">Claude</option>
+                <option value="custom">自定义 (兼容OpenAI)</option>
               </select>
             </div>
             <div class="form-group">
-              <label>API Key</label>
-              <input type="password" id="llmApiKey" placeholder="sk-... 或 sk-ant-...">
+              <label>API Key <a id="llmKeyLink" href="#" target="_blank" style="font-size:11px;margin-left:4px;font-weight:400">获取密钥</a></label>
+              <input type="password" id="llmApiKey" placeholder="填写 API Key">
             </div>
+          </div>
+          <div id="llmKeyHint" class="key-hint" style="font-size:11px;color:#91959a;margin:-4px 0 6px 0"></div>
+          <div id="customUrlGroup" class="form-group hidden">
+            <label>API 地址 <span style="color:#aaa;font-weight:400">(兼容 OpenAI 格式)</span></label>
+            <input type="text" id="llmCustomUrl" placeholder="https://your-api.com/v1/chat/completions">
           </div>
           <div class="form-group">
             <label>模型 <span style="color:#aaa;font-weight:400">(可选，留空用默认)</span></label>
-            <input type="text" id="llmModel" placeholder="默认: claude-haiku-4-5 / gpt-4o-mini">
+            <input type="text" id="llmModel" placeholder="">
           </div>
         </div>
 
