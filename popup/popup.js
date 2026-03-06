@@ -118,11 +118,12 @@ const COMPETITION_TEMPLATE = (idx) => `
         <select data-efield="awardLevel">
           <option value="">请选择</option>
           <option value="国家级">国家级</option><option value="省级">省级</option>
-          <option value="市级">市级</option><option value="校级">校级</option>
+          <option value="市级">市级</option><option value="区级">区级</option>
+          <option value="校级">校级</option><option value="院级">院级</option>
           <option value="一等奖">一等奖</option><option value="二等奖">二等奖</option>
           <option value="三等奖">三等奖</option><option value="金奖">金奖</option>
           <option value="银奖">银奖</option><option value="铜奖">铜奖</option>
-          <option value="优秀奖">优秀奖</option>
+          <option value="优秀奖">优秀奖</option><option value="特等奖">特等奖</option>
         </select>
       </div>
     </div>
