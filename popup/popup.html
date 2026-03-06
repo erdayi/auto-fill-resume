@@ -10,67 +10,68 @@
   <div class="app">
     <!-- Header -->
     <header class="header">
-      <div class="header-top">
-        <div class="logo">
-          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-            <rect width="28" height="28" rx="8" fill="url(#grad)"/>
-            <path d="M8 7h8l4 4v10a1 1 0 01-1 1H8a1 1 0 01-1-1V8a1 1 0 011-1z" fill="#fff" opacity="0.9"/>
-            <path d="M16 7v4h4" fill="none" stroke="#fff" stroke-width="1.2"/>
-            <line x1="10" y1="13" x2="18" y2="13" stroke="#4285f4" stroke-width="1.2" stroke-linecap="round"/>
-            <line x1="10" y1="15.5" x2="16" y2="15.5" stroke="#4285f4" stroke-width="1.2" stroke-linecap="round"/>
-            <line x1="10" y1="18" x2="17" y2="18" stroke="#4285f4" stroke-width="1.2" stroke-linecap="round"/>
-            <circle cx="19" cy="19" r="4.5" fill="#34a853"/>
-            <path d="M17 19l1.5 1.5 3-3" fill="none" stroke="#fff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-            <defs><linearGradient id="grad" x1="0" y1="0" x2="28" y2="28"><stop stop-color="#4285f4"/><stop offset="1" stop-color="#1a56db"/></linearGradient></defs>
-          </svg>
-          <div>
-            <h1>简历自动填写</h1>
-            <span class="version">v1.4</span>
-          </div>
+      <div class="logo">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <rect width="28" height="28" rx="8" fill="url(#grad)"/>
+          <path d="M8 7h8l4 4v10a1 1 0 01-1 1H8a1 1 0 01-1-1V8a1 1 0 011-1z" fill="#fff" opacity="0.9"/>
+          <path d="M16 7v4h4" fill="none" stroke="#fff" stroke-width="1.2"/>
+          <line x1="10" y1="13" x2="18" y2="13" stroke="#2563EB" stroke-width="1.2" stroke-linecap="round"/>
+          <line x1="10" y1="15.5" x2="16" y2="15.5" stroke="#2563EB" stroke-width="1.2" stroke-linecap="round"/>
+          <line x1="10" y1="18" x2="17" y2="18" stroke="#2563EB" stroke-width="1.2" stroke-linecap="round"/>
+          <circle cx="19" cy="19" r="4.5" fill="#059669"/>
+          <path d="M17 19l1.5 1.5 3-3" fill="none" stroke="#fff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+          <defs><linearGradient id="grad" x1="0" y1="0" x2="28" y2="28"><stop stop-color="#2563EB"/><stop offset="1" stop-color="#1D4ED8"/></linearGradient></defs>
+        </svg>
+        <div class="logo-text">
+          <h1>简历自动填写</h1>
+          <span class="version">v1.4</span>
         </div>
-        <div class="header-actions">
-          <button id="btnUploadResume" class="icon-btn" title="上传简历智能解析" style="color:var(--success);border-color:var(--success)">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 3l3 3H9v4H7V7H5l3-3z"/></svg>
-          </button>
-          <button id="btnImport" class="icon-btn" title="导入JSON数据">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M3 14h10v-1H3v1zm5-2l4-4h-3V2H7v6H4l4 4z"/></svg>
-          </button>
-          <button id="btnExport" class="icon-btn" title="导出JSON数据">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M3 14h10v-1H3v1zm5-9l-4 4h3v6h2V9h3L8 5z"/></svg>
-          </button>
-          <button id="btnSettings" class="icon-btn" title="同步 & API 设置">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-          </button>
-        </div>
+      </div>
+      <div class="header-actions">
+        <button id="btnUploadResume" class="header-btn" title="上传简历解析">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 3l3 3H9v4H7V7H5l3-3z"/></svg>
+        </button>
+        <button id="btnSettings" class="header-btn" title="同步与设置">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        </button>
       </div>
     </header>
 
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <button id="btnFill" class="btn-fill">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2l4.5 1L14 3l-1 7.5L5.5 14 2 2zm4 4a1.5 1.5 0 100 3 1.5 1.5 0 000-3z"/></svg>
+        一键填写当前页面
+      </button>
+      <div class="quick-secondary">
+        <button id="btnScan" class="btn-secondary-action">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M1 3V1h3v1H2v1H1zm14 0V1h-3v1h2v1h1zM1 13v2h3v-1H2v-1H1zm14 0v2h-3v-1h2v-1h1zM3 5v6h10V5H3zm1 1h8v4H4V6z"/></svg>
+          扫描字段
+        </button>
+        <button id="btnRecord" class="btn-secondary-action" title="记录当前网站为已投递">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M13.5 2h-11A1.5 1.5 0 001 3.5v9A1.5 1.5 0 002.5 14h11a1.5 1.5 0 001.5-1.5v-9A1.5 1.5 0 0013.5 2zM7 11L4 8l1-1 2 2 4-4 1 1-5 5z"/></svg>
+          记录投递
+        </button>
+      </div>
+    </div>
+
+    <!-- Scan Result Preview -->
+    <div id="scanResult" class="scan-result hidden">
+      <div class="scan-header">
+        <span>检测到 <strong id="scanCount">0</strong> 个可填写字段</span>
+        <button id="closeScan" class="icon-btn-sm">&times;</button>
+      </div>
+      <div id="scanList" class="scan-list"></div>
+    </div>
+
     <!-- Tabs -->
     <nav class="tabs">
-      <button class="tab active" data-tab="basic">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 100-6 3 3 0 000 6zm-6 8a6 6 0 1112 0H2z"/></svg>
-        <span>基本信息</span>
-      </button>
-      <button class="tab" data-tab="education">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0L0 4l8 4 8-4-8-4zM2 6v4l6 3 6-3V6L8 9 2 6z"/></svg>
-        <span>教育经历</span>
-      </button>
-      <button class="tab" data-tab="work">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M6 2v1H2a1 1 0 00-1 1v9a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1h-4V2a1 1 0 00-1-1H7a1 1 0 00-1 1zm1 0h2v1H7V2z"/></svg>
-        <span>工作/实习</span>
-      </button>
-      <button class="tab" data-tab="project">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 3a1 1 0 011-1h4.586a1 1 0 01.707.293l.707.707H13a1 1 0 011 1v8a1 1 0 01-1 1H3a1 1 0 01-1-1V3z"/></svg>
-        <span>项目/竞赛</span>
-      </button>
-      <button class="tab" data-tab="other">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 3a1 1 0 110 2 1 1 0 010-2zm2 8H6v-1h1V8H6V7h3v4h1v1z"/></svg>
-        <span>其他</span>
-      </button>
-      <button class="tab" data-tab="history">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h12v2H2V2zm0 4h12v2H2V6zm0 4h9v2H2v-2zm10.5.5l1.5 1.5 2-2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M2 2h12v2H2V2zm0 4h12v2H2V6zm0 4h8v2H2v-2z"/></svg>
-        <span>投递记录</span>
-      </button>
+      <button class="tab active" data-tab="basic"><span>个人信息</span></button>
+      <button class="tab" data-tab="education"><span>教育</span></button>
+      <button class="tab" data-tab="work"><span>工作</span></button>
+      <button class="tab" data-tab="project"><span>项目</span></button>
+      <button class="tab" data-tab="other"><span>更多</span></button>
+      <button class="tab" data-tab="history"><span>记录</span></button>
     </nav>
 
     <!-- Form Sections -->
@@ -86,7 +87,7 @@
           <div class="form-group form-sm">
             <label>性别</label>
             <select data-field="gender">
-              <option value="">请选择</option>
+              <option value="">选择</option>
               <option value="男">男</option>
               <option value="女">女</option>
             </select>
@@ -94,7 +95,7 @@
         </div>
         <div class="form-group">
           <label>身份证号</label>
-          <input type="text" data-field="idCard" placeholder="18位身份证号码" maxlength="18">
+          <input type="text" data-field="idCard" placeholder="18位身份证号（自动推断生日/性别）" maxlength="18">
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -143,18 +144,18 @@
         <div class="form-row">
           <div class="form-group">
             <label>身高(cm)</label>
-            <input type="text" data-field="height" placeholder="如：175">
+            <input type="text" data-field="height" placeholder="175">
           </div>
           <div class="form-group">
             <label>体重(kg)</label>
-            <input type="text" data-field="weight" placeholder="如：65">
+            <input type="text" data-field="weight" placeholder="65">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label>政治面貌</label>
             <select data-field="politicalStatus">
-              <option value="">请选择</option>
+              <option value="">选择</option>
               <option value="群众">群众</option>
               <option value="共青团员">共青团员</option>
               <option value="中共党员">中共党员</option>
@@ -164,7 +165,7 @@
           <div class="form-group">
             <label>婚姻状况</label>
             <select data-field="maritalStatus">
-              <option value="">请选择</option>
+              <option value="">选择</option>
               <option value="未婚">未婚</option>
               <option value="已婚">已婚</option>
             </select>
@@ -172,7 +173,7 @@
         </div>
       </div>
 
-      <!-- EDUCATION (multiple) -->
+      <!-- EDUCATION -->
       <div class="tab-content" id="tab-education">
         <div id="eduList" class="entry-list"></div>
         <button class="btn-add" id="addEdu">
@@ -181,7 +182,7 @@
         </button>
       </div>
 
-      <!-- WORK / INTERN (multiple) -->
+      <!-- WORK -->
       <div class="tab-content" id="tab-work">
         <div id="workList" class="entry-list"></div>
         <button class="btn-add" id="addWork">
@@ -190,7 +191,7 @@
         </button>
       </div>
 
-      <!-- PROJECT + COMPETITION (multiple) -->
+      <!-- PROJECT + COMPETITION -->
       <div class="tab-content" id="tab-project">
         <div class="section-label">项目经历</div>
         <div id="projectList" class="entry-list"></div>
@@ -198,7 +199,7 @@
           <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 2a1 1 0 011 1v4h4a1 1 0 110 2H9v4a1 1 0 11-2 0V9H3a1 1 0 010-2h4V3a1 1 0 011-1z"/></svg>
           添加项目经历
         </button>
-        <div class="section-label" style="margin-top:12px">竞赛/荣誉</div>
+        <div class="section-label" style="margin-top:14px">竞赛/荣誉</div>
         <div id="competitionList" class="entry-list"></div>
         <button class="btn-add" id="addCompetition">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 2a1 1 0 011 1v4h4a1 1 0 110 2H9v4a1 1 0 11-2 0V9H3a1 1 0 010-2h4V3a1 1 0 011-1z"/></svg>
@@ -239,7 +240,7 @@
           <div class="form-group">
             <label>英语水平</label>
             <select data-field="englishLevel">
-              <option value="">请选择</option>
+              <option value="">选择</option>
               <option value="CET-4">CET-4 (四级)</option>
               <option value="CET-6">CET-6 (六级)</option>
               <option value="TEM-4">TEM-4 (专四)</option>
@@ -279,7 +280,7 @@
           <textarea data-field="selfEvaluation" rows="3" placeholder="简要描述个人优势"></textarea>
         </div>
 
-        <div class="section-label">联系方式 & 其他</div>
+        <div class="section-label">联系方式</div>
         <div class="form-row">
           <div class="form-group">
             <label>个人网站</label>
@@ -311,6 +312,7 @@
           </div>
         </div>
       </div>
+
       <!-- APPLICATION HISTORY -->
       <div class="tab-content" id="tab-history">
         <div class="history-toolbar">
@@ -325,10 +327,10 @@
               <option value="已拒绝">已拒绝</option>
             </select>
             <button id="exportHistory" class="icon-btn" title="导出CSV">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 13h12v1H2v-1zM8 2l4 4h-3v5H7V6H4l4-4z"/></svg>
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M2 13h12v1H2v-1zM8 2l4 4h-3v5H7V6H4l4-4z"/></svg>
             </button>
             <button id="addHistory" class="icon-btn" title="手动添加">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 2a1 1 0 011 1v4h4a1 1 0 110 2H9v4a1 1 0 11-2 0V9H3a1 1 0 010-2h4V3a1 1 0 011-1z"/></svg>
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M8 2a1 1 0 011 1v4h4a1 1 0 110 2H9v4a1 1 0 11-2 0V9H3a1 1 0 010-2h4V3a1 1 0 011-1z"/></svg>
             </button>
           </div>
         </div>
@@ -339,20 +341,19 @@
           </table>
         </div>
         <div id="historyEmpty" class="history-empty">
-          <svg width="32" height="32" viewBox="0 0 16 16" fill="#d1d5db"><path d="M2 2h12v2H2V2zm0 4h12v2H2V6zm0 4h12v2H2v-2z"/></svg>
+          <svg width="32" height="32" viewBox="0 0 16 16" fill="#CBD5E1"><path d="M2 2h12v2H2V2zm0 4h12v2H2V6zm0 4h12v2H2v-2z"/></svg>
           <p>暂无投递记录</p>
-          <p class="hint">点击求职网站的"投递"按钮时自动记录</p>
+          <p class="hint">点击"记录投递"或求职网站的投递按钮时自动记录</p>
         </div>
         <!-- Sync & Detection Settings -->
         <details class="sync-settings">
           <summary class="sync-summary">投递检测 & 同步设置</summary>
           <div class="sync-body">
             <div class="form-group">
-              <label>投递按钮关键词 <span style="color:#aaa;font-weight:400">(逗号分隔，补充未识别的按钮文字)</span></label>
+              <label>投递按钮关键词 <span style="color:var(--text-3);font-weight:400">(逗号分隔)</span></label>
               <input type="text" id="customSubmitKeywords" placeholder="例：沟通职位,发起聊天,我要应聘">
             </div>
-            <div style="border-top:1px solid var(--border);margin:8px 0;"></div>
-            <div class="sync-tip">投递时自动同步，支持两种方式：</div>
+            <div style="border-top:1px solid var(--border-light);margin:10px 0;"></div>
             <div class="form-group">
               <label>同步方式</label>
               <select id="syncType">
@@ -366,8 +367,8 @@
             </div>
             <!-- Feishu Bitable Config -->
             <div id="bitableConfig" class="bitable-config">
-              <div class="sync-tip" style="margin:4px 0 6px">
-                <a href="https://open.feishu.cn/app" target="_blank" style="color:var(--primary)">1. 创建飞书应用</a> →
+              <div class="sync-tip">
+                <a href="https://open.feishu.cn/app" target="_blank" style="color:var(--primary)">1. 创建飞书应用</a> &rarr;
                 <a href="#" id="bitableHelp" style="color:var(--primary)">2. 配置步骤</a>
               </div>
               <div class="form-row" style="gap:6px">
@@ -377,25 +378,25 @@
                 </div>
                 <div class="form-group" style="flex:1">
                   <label>App Secret</label>
-                  <input type="password" id="feishuAppSecret" placeholder="飞书应用密钥">
+                  <input type="password" id="feishuAppSecret" placeholder="密钥">
                 </div>
               </div>
               <div class="form-group">
-                <label>多维表格链接 <span style="color:#aaa;font-weight:400">(打开表格复制浏览器地址栏)</span></label>
+                <label>多维表格链接</label>
                 <input type="text" id="feishuBitableUrl" placeholder="https://xxx.feishu.cn/base/xxxxx">
               </div>
-              <button id="bitableInit" class="btn btn-outline" style="font-size:11px;padding:3px 10px;margin-top:4px">初始化表格结构</button>
+              <button id="bitableInit" class="btn btn-outline" style="font-size:11px;padding:4px 12px;margin-top:4px">初始化表格结构</button>
             </div>
             <!-- WeCom Sheet Config -->
             <div id="wecomSheetConfig" class="hidden">
-              <div class="sync-tip" style="margin:4px 0 6px">
-                <a href="https://developer.work.weixin.qq.com/" target="_blank" style="color:var(--primary)">1. 企微管理后台</a> →
+              <div class="sync-tip">
+                <a href="https://developer.work.weixin.qq.com/" target="_blank" style="color:var(--primary)">1. 企微管理后台</a> &rarr;
                 <a href="#" id="wecomSheetHelp" style="color:var(--primary)">2. 配置步骤</a>
               </div>
               <div class="form-row" style="gap:6px">
                 <div class="form-group" style="flex:1">
                   <label>Corp ID</label>
-                  <input type="text" id="wecomCorpId" placeholder="企业ID ww_xxxxxxxx">
+                  <input type="text" id="wecomCorpId" placeholder="ww_xxxxxxxx">
                 </div>
                 <div class="form-group" style="flex:1">
                   <label>Corp Secret</label>
@@ -403,16 +404,14 @@
                 </div>
               </div>
               <div class="form-group">
-                <label>文档链接 <span style="color:#aaa;font-weight:400">(智能表格的浏览器地址)</span></label>
+                <label>文档链接</label>
                 <input type="text" id="wecomDocUrl" placeholder="https://doc.weixin.qq.com/smartsheet/xxxxxx">
               </div>
-              <div class="form-row" style="gap:6px">
-                <div class="form-group" style="flex:1">
-                  <label>Sheet ID <span style="color:#aaa;font-weight:400">(工作表标识)</span></label>
-                  <input type="text" id="wecomSheetId" placeholder="初始化后自动填入">
-                </div>
+              <div class="form-group">
+                <label>Sheet ID</label>
+                <input type="text" id="wecomSheetId" placeholder="初始化后自动填入">
               </div>
-              <button id="wecomSheetInit" class="btn btn-outline" style="font-size:11px;padding:3px 10px;margin-top:4px">初始化表格</button>
+              <button id="wecomSheetInit" class="btn btn-outline" style="font-size:11px;padding:4px 12px;margin-top:4px">初始化表格</button>
             </div>
             <!-- Webhook Config -->
             <div id="webhookConfig" class="hidden">
@@ -421,9 +420,9 @@
                 <input type="text" id="syncWebhookUrl" placeholder="粘贴机器人的 Webhook 地址">
               </div>
             </div>
-            <div class="form-row" style="gap:6px;align-items:center;margin-top:6px">
+            <div class="form-row" style="gap:8px;align-items:center;margin-top:8px">
               <label class="sync-toggle"><input type="checkbox" id="syncEnabled"> 启用自动同步</label>
-              <button id="syncTest" class="btn btn-outline" style="font-size:11px;padding:3px 10px">测试</button>
+              <button id="syncTest" class="btn btn-outline" style="font-size:11px;padding:4px 12px">测试</button>
             </div>
           </div>
         </details>
@@ -431,37 +430,20 @@
 
     </div>
 
-    <!-- Scan Result Preview -->
-    <div id="scanResult" class="scan-result hidden">
-      <div class="scan-header">
-        <span>检测到 <strong id="scanCount">0</strong> 个可填写字段</span>
-        <button id="closeScan" class="icon-btn-sm">&times;</button>
-      </div>
-      <div id="scanList" class="scan-list"></div>
-    </div>
-
-    <!-- Actions -->
-    <div class="actions">
-      <button id="btnSave" class="btn btn-secondary">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2v12h12V4.5L11.5 2H2zm2 1h5v3H4V3zm7 10H5V9h6v4z"/></svg>
+    <!-- Footer -->
+    <footer class="footer">
+      <button id="btnSave" class="btn-save">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2v12h12V4.5L11.5 2H2zm2 1h5v3H4V3zm7 10H5V9h6v4z"/></svg>
         保存
       </button>
-      <button id="btnScan" class="btn btn-outline">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M1 3V1h3v1H2v1H1zm14 0V1h-3v1h2v1h1zM1 13v2h3v-1H2v-1H1zm14 0v2h-3v-1h2v-1h1zM3 5v6h10V5H3zm1 1h8v4H4V6z"/></svg>
-        扫描
-      </button>
-      <button id="btnFill" class="btn btn-primary">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2l4.5 1L14 3l-1 7.5L5.5 14 2 2zm4 4a1.5 1.5 0 100 3 1.5 1.5 0 000-3z"/></svg>
-        一键填写
-      </button>
-      <button id="btnRecord" class="btn btn-record" title="记录当前网站为已投递">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M13.5 2h-11A1.5 1.5 0 001 3.5v9A1.5 1.5 0 002.5 14h11a1.5 1.5 0 001.5-1.5v-9A1.5 1.5 0 0013.5 2zM7 11L4 8l1-1 2 2 4-4 1 1-5 5z"/></svg>
-        记录
-      </button>
-    </div>
-    <div class="footer-actions">
-      <button id="btnClear" class="link-btn danger">清除所有数据</button>
-    </div>
+      <div class="footer-utils">
+        <button id="btnImport" class="footer-link" title="导入JSON">导入</button>
+        <span class="footer-sep">&middot;</span>
+        <button id="btnExport" class="footer-link" title="导出JSON">导出</button>
+        <span class="footer-sep">&middot;</span>
+        <button id="btnClear" class="footer-link danger">清空</button>
+      </div>
+    </footer>
 
     <div id="toast" class="toast hidden"></div>
   </div>
@@ -508,40 +490,39 @@
                 <option value="doubao">豆包 (字节)</option>
                 <option value="openai">OpenAI</option>
                 <option value="claude">Claude</option>
-                <option value="custom">自定义 (兼容OpenAI)</option>
+                <option value="custom">自定义</option>
               </select>
             </div>
             <div class="form-group">
-              <label>API Key <a id="llmKeyLink" href="#" target="_blank" style="font-size:11px;margin-left:4px;font-weight:400">获取密钥</a></label>
+              <label>API Key <a id="llmKeyLink" href="#" target="_blank" style="font-size:10px;margin-left:4px;font-weight:400;color:var(--primary)">获取密钥</a></label>
               <input type="password" id="llmApiKey" placeholder="填写 API Key">
             </div>
           </div>
-          <div id="llmKeyHint" class="key-hint" style="font-size:11px;color:#91959a;margin:-4px 0 6px 0"></div>
+          <div id="llmKeyHint" class="key-hint" style="font-size:10px;color:var(--text-3);margin:-4px 0 6px 0"></div>
           <div id="customUrlGroup" class="form-group hidden">
-            <label>API 地址 <span style="color:#aaa;font-weight:400">(兼容 OpenAI 格式)</span></label>
+            <label>API 地址</label>
             <input type="text" id="llmCustomUrl" placeholder="https://your-api.com/v1/chat/completions">
           </div>
           <div class="form-group">
-            <label>模型 <span style="color:#aaa;font-weight:400">(可选，留空用默认)</span></label>
+            <label>模型 <span style="color:var(--text-3);font-weight:400">(可选)</span></label>
             <input type="text" id="llmModel" placeholder="">
           </div>
-          <button id="btnTestLLM" class="btn btn-outline" style="width:100%;font-size:11px;padding:4px 0">测试 API 连接</button>
+          <button id="btnTestLLM" class="btn btn-outline" style="width:100%;font-size:11px;padding:5px 0">测试 API 连接</button>
           <div id="llmTestResult" style="font-size:11px;margin-top:4px;min-height:16px"></div>
         </div>
 
-        <div class="step-label" style="margin-top:8px">上传简历</div>
+        <div class="step-label" style="margin-top:10px">上传简历</div>
         <div class="upload-zone" id="uploadZone">
-          <svg width="28" height="28" viewBox="0 0 16 16" fill="#c0c4cc"><path d="M8 2l4 4h-3v6H7V6H4l4-4zM2 13h12v1H2v-1z"/></svg>
+          <svg width="24" height="24" viewBox="0 0 16 16" fill="currentColor" opacity="0.3"><path d="M8 2l4 4h-3v6H7V6H4l4-4zM2 13h12v1H2v-1z"/></svg>
           <p>拖拽文件到这里，或点击选择</p>
           <p class="hint">支持 PDF、DOCX、TXT</p>
           <input type="file" id="resumeFile" accept=".pdf,.docx,.doc,.txt,.md" style="display:none">
         </div>
 
-        <div class="step-label" style="margin-top:8px">或粘贴简历文本</div>
-        <textarea id="resumeText" rows="4" class="resume-textarea" placeholder="将简历内容粘贴到这里..."></textarea>
+        <div class="step-label" style="margin-top:10px">或粘贴简历文本</div>
+        <textarea id="resumeText" rows="3" class="resume-textarea" placeholder="将简历内容粘贴到这里..."></textarea>
 
-        <button id="btnParseResume" class="btn btn-primary" style="width:100%;margin-top:10px">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 3l3 3H9v4H7V7H5l3-3z"/></svg>
+        <button id="btnParseResume" class="btn btn-primary" style="width:100%;margin-top:12px;padding:9px 0">
           开始解析
         </button>
       </div>
@@ -555,14 +536,14 @@
           <input type="text" id="profileName" class="profile-name-input" placeholder="档案名称，如：技术岗简历">
         </div>
         <div class="parse-actions">
-          <button id="btnParseBack" class="btn btn-outline" style="flex:1">返回修改</button>
+          <button id="btnParseBack" class="btn btn-outline" style="flex:1">返回</button>
           <button id="btnParseConfirm" class="btn btn-primary" style="flex:2">确认填入</button>
         </div>
       </div>
 
-      <!-- Step Compare: Entry conflicts -->
+      <!-- Step Compare -->
       <div id="resumeStepCompare" class="modal-step hidden">
-        <div class="step-label">解析对比 <span style="font-size:11px;color:#91959a;font-weight:400">— 基础信息已自动合并</span></div>
+        <div class="step-label">解析对比 <span style="font-size:11px;color:var(--text-3);font-weight:400">基础信息已自动合并</span></div>
         <div id="compareContent" class="compare-content"></div>
         <div class="parse-actions">
           <button id="btnCompareBack" class="btn btn-outline" style="flex:1">返回</button>
