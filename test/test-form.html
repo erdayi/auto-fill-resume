@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>表单填写测试页面 — 简历自动填写助手</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f6fa; color: #333; padding: 20px; }
+    h1 { text-align: center; margin: 20px 0; color: #1a73e8; }
+    h2 { font-size: 16px; color: #4285f4; margin: 20px 0 12px; padding-bottom: 8px; border-bottom: 2px solid #e8eaf6; }
+    .container { max-width: 800px; margin: 0 auto; }
+    .card { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .form-row { display: flex; gap: 16px; margin-bottom: 12px; }
+    .form-row .form-group { flex: 1; }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 13px; color: #555; margin-bottom: 4px; font-weight: 500; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px;
+      font-size: 14px; transition: border-color 0.2s;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      outline: none; border-color: #4285f4; box-shadow: 0 0 0 3px rgba(66,133,244,0.1);
+    }
+    textarea { resize: vertical; min-height: 60px; font-family: inherit; }
+    .radio-group { display: flex; gap: 16px; padding: 8px 0; }
+    .radio-group label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+    .section-title { font-size: 14px; color: #34a853; margin: 16px 0 8px; font-weight: 600; }
+    .add-btn { padding: 8px 16px; border: 2px dashed #ccc; border-radius: 8px; background: none; color: #666; cursor: pointer; width: 100%; margin: 8px 0; }
+    .add-btn:hover { border-color: #4285f4; color: #4285f4; }
+    .experience-item { border: 1px solid #e8e8e8; border-radius: 8px; padding: 16px; margin-bottom: 12px; background: #fafbfc; }
+    .hint { font-size: 12px; color: #999; margin-top: 8px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>表单填写测试页面</h1>
+    <p class="hint">安装插件后，在此页面点击"一键填写"测试效果</p>
+
+    <!-- 基本信息 -->
+    <div class="card" data-section="basic">
+      <h2>基本信息</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="name">姓名</label>
+          <input type="text" id="name" name="name" placeholder="请输入姓名">
+        </div>
+        <div class="form-group">
+          <label>性别</label>
+          <div class="radio-group">
+            <label><input type="radio" name="gender" value="男"> 男</label>
+            <label><input type="radio" name="gender" value="女"> 女</label>
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="idCard">身份证号</label>
+          <input type="text" id="idCard" name="idCard" placeholder="身份证号码">
+        </div>
+        <div class="form-group">
+          <label for="birthday">出生日期</label>
+          <input type="date" id="birthday" name="birthday">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="phone">手机号</label>
+          <input type="tel" id="phone" name="phone" placeholder="手机号码">
+        </div>
+        <div class="form-group">
+          <label for="email">邮箱</label>
+          <input type="email" id="email" name="email" placeholder="电子邮箱">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="city">现居城市</label>
+          <input type="text" id="city" name="city" placeholder="城市">
+        </div>
+        <div class="form-group">
+          <label for="ethnicity">民族</label>
+          <input type="text" id="ethnicity" name="ethnicity" placeholder="民族">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="politicalStatus">政治面貌</label>
+          <select id="politicalStatus" name="politicalStatus">
+            <option value="">请选择</option>
+            <option value="群众">群众</option>
+            <option value="共青团员">共青团员</option>
+            <option value="中共党员">中共党员</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="maritalStatus">婚姻状况</label>
+          <select id="maritalStatus" name="maritalStatus">
+            <option value="">请选择</option>
+            <option value="未婚">未婚</option>
+            <option value="已婚">已婚</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="address">详细地址</label>
+        <input type="text" id="address" name="address" placeholder="详细地址">
+      </div>
+    </div>
+
+    <!-- 教育经历 -->
+    <div class="card" data-section="education">
+      <h2>教育经历</h2>
+      <div class="experience-item" id="edu-1">
+        <div class="section-title">教育经历 #1</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>学校</label>
+            <input type="text" name="school" placeholder="学校名称">
+          </div>
+          <div class="form-group">
+            <label>学历</label>
+            <select name="degree">
+              <option value="">请选择</option>
+              <option value="高中">高中</option>
+              <option value="大专">大专</option>
+              <option value="本科">本科</option>
+              <option value="硕士">硕士</option>
+              <option value="博士">博士</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>专业</label>
+            <input type="text" name="major" placeholder="专业名称">
+          </div>
+          <div class="form-group">
+            <label>GPA</label>
+            <input type="text" name="gpa" placeholder="绩点">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>入学时间</label>
+            <input type="month" name="eduStartDate">
+          </div>
+          <div class="form-group">
+            <label>毕业时间</label>
+            <input type="month" name="eduEndDate">
+          </div>
+        </div>
+      </div>
+      <button class="add-btn" onclick="addEducation()">+ 添加教育经历</button>
+    </div>
+
+    <!-- 工作/实习经历 -->
+    <div class="card" data-section="work">
+      <h2>工作/实习经历</h2>
+      <div class="experience-item" id="work-1">
+        <div class="section-title">工作经历 #1</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>公司名称</label>
+            <input type="text" name="company" placeholder="公司名称">
+          </div>
+          <div class="form-group">
+            <label>职位</label>
+            <input type="text" name="jobTitle" placeholder="职位名称">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>入职时间</label>
+            <input type="month" name="workStartDate">
+          </div>
+          <div class="form-group">
+            <label>离职时间</label>
+            <input type="month" name="workEndDate">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>工作描述</label>
+          <textarea name="jobDescription" placeholder="工作内容与职责"></textarea>
+        </div>
+      </div>
+      <button class="add-btn" onclick="addWork()">+ 添加工作/实习经历</button>
+    </div>
+
+    <!-- 项目经历 -->
+    <div class="card" data-section="project">
+      <h2>项目经历</h2>
+      <div class="experience-item" id="project-1">
+        <div class="section-title">项目经历 #1</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>项目名称</label>
+            <input type="text" name="projectName" placeholder="项目名称">
+          </div>
+          <div class="form-group">
+            <label>担任角色</label>
+            <input type="text" name="projectRole" placeholder="你的角色">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>开始时间</label>
+            <input type="month" name="projectStartDate">
+          </div>
+          <div class="form-group">
+            <label>结束时间</label>
+            <input type="month" name="projectEndDate">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>项目描述</label>
+          <textarea name="projectDescription" placeholder="项目背景、技术栈、成果"></textarea>
+        </div>
+        <div class="form-group">
+          <label>项目链接</label>
+          <input type="url" name="projectLink" placeholder="https://">
+        </div>
+      </div>
+      <button class="add-btn" onclick="addProject()">+ 添加项目经历</button>
+    </div>
+
+    <!-- 其他信息 -->
+    <div class="card" data-section="other">
+      <h2>其他信息</h2>
+      <div class="form-group">
+        <label for="skills">技能特长</label>
+        <textarea id="skills" name="skills" placeholder="技能列表"></textarea>
+      </div>
+      <div class="form-group">
+        <label for="selfEvaluation">自我评价</label>
+        <textarea id="selfEvaluation" name="selfEvaluation" placeholder="自我评价"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="expectedJob">期望职位</label>
+          <input type="text" id="expectedJob" name="expectedJob" placeholder="期望职位">
+        </div>
+        <div class="form-group">
+          <label for="expectedSalary">期望薪资</label>
+          <input type="text" id="expectedSalary" name="expectedSalary" placeholder="期望薪资">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="website">个人网站</label>
+          <input type="url" id="website" name="website" placeholder="https://">
+        </div>
+        <div class="form-group">
+          <label for="wechat">微信号</label>
+          <input type="text" id="wechat" name="wechat" placeholder="微信号">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let eduCount = 1, workCount = 1, projectCount = 1;
+
+    function addEducation() {
+      eduCount++;
+      const html = `
+        <div class="experience-item" id="edu-${eduCount}">
+          <div class="section-title">教育经历 #${eduCount}</div>
+          <div class="form-row">
+            <div class="form-group"><label>学校</label><input type="text" name="school" placeholder="学校名称"></div>
+            <div class="form-group"><label>学历</label><select name="degree"><option value="">请选择</option><option value="高中">高中</option><option value="大专">大专</option><option value="本科">本科</option><option value="硕士">硕士</option><option value="博士">博士</option></select></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>专业</label><input type="text" name="major" placeholder="专业名称"></div>
+            <div class="form-group"><label>GPA</label><input type="text" name="gpa" placeholder="绩点"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>入学时间</label><input type="month" name="eduStartDate"></div>
+            <div class="form-group"><label>毕业时间</label><input type="month" name="eduEndDate"></div>
+          </div>
+        </div>`;
+      document.querySelector('[data-section="education"]').querySelector('.add-btn').insertAdjacentHTML('beforebegin', html);
+    }
+
+    function addWork() {
+      workCount++;
+      const html = `
+        <div class="experience-item" id="work-${workCount}">
+          <div class="section-title">工作经历 #${workCount}</div>
+          <div class="form-row">
+            <div class="form-group"><label>公司名称</label><input type="text" name="company" placeholder="公司名称"></div>
+            <div class="form-group"><label>职位</label><input type="text" name="jobTitle" placeholder="职位名称"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>入职时间</label><input type="month" name="workStartDate"></div>
+            <div class="form-group"><label>离职时间</label><input type="month" name="workEndDate"></div>
+          </div>
+          <div class="form-group"><label>工作描述</label><textarea name="jobDescription" placeholder="工作内容与职责"></textarea></div>
+        </div>`;
+      document.querySelector('[data-section="work"]').querySelector('.add-btn').insertAdjacentHTML('beforebegin', html);
+    }
+
+    function addProject() {
+      projectCount++;
+      const html = `
+        <div class="experience-item" id="project-${projectCount}">
+          <div class="section-title">项目经历 #${projectCount}</div>
+          <div class="form-row">
+            <div class="form-group"><label>项目名称</label><input type="text" name="projectName" placeholder="项目名称"></div>
+            <div class="form-group"><label>担任角色</label><input type="text" name="projectRole" placeholder="你的角色"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>开始时间</label><input type="month" name="projectStartDate"></div>
+            <div class="form-group"><label>结束时间</label><input type="month" name="projectEndDate"></div>
+          </div>
+          <div class="form-group"><label>项目描述</label><textarea name="projectDescription" placeholder="项目背景、技术栈、成果"></textarea></div>
+          <div class="form-group"><label>项目链接</label><input type="url" name="projectLink" placeholder="https://"></div>
+        </div>`;
+      document.querySelector('[data-section="project"]').querySelector('.add-btn').insertAdjacentHTML('beforebegin', html);
+    }
+  </script>
+</body>
+</html>

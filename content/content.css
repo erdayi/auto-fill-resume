@@ -1,0 +1,16 @@
+/* Resume Auto Filler — Content Injection Styles */
+/* Scoped to avoid conflicts with page styles */
+
+#__resume-filler-badge {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif !important;
+}
+
+@keyframes __rfBadgeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes __rfBadgeOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-10px); }
+}

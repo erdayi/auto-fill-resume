@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>简历自动填写助手</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-top">
+        <div class="logo">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <rect width="28" height="28" rx="8" fill="url(#grad)"/>
+            <path d="M8 7h8l4 4v10a1 1 0 01-1 1H8a1 1 0 01-1-1V8a1 1 0 011-1z" fill="#fff" opacity="0.9"/>
+            <path d="M16 7v4h4" fill="none" stroke="#fff" stroke-width="1.2"/>
+            <line x1="10" y1="13" x2="18" y2="13" stroke="#4285f4" stroke-width="1.2" stroke-linecap="round"/>
+            <line x1="10" y1="15.5" x2="16" y2="15.5" stroke="#4285f4" stroke-width="1.2" stroke-linecap="round"/>
+            <line x1="10" y1="18" x2="17" y2="18" stroke="#4285f4" stroke-width="1.2" stroke-linecap="round"/>
+            <circle cx="19" cy="19" r="4.5" fill="#34a853"/>
+            <path d="M17 19l1.5 1.5 3-3" fill="none" stroke="#fff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+            <defs><linearGradient id="grad" x1="0" y1="0" x2="28" y2="28"><stop stop-color="#4285f4"/><stop offset="1" stop-color="#1a56db"/></linearGradient></defs>
+          </svg>
+          <div>
+            <h1>简历自动填写</h1>
+            <span class="version">v1.2</span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button id="btnImport" class="icon-btn" title="导入数据">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M3 14h10v-1H3v1zm5-2l4-4h-3V2H7v6H4l4 4z"/></svg>
+          </button>
+          <button id="btnExport" class="icon-btn" title="导出数据">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M3 14h10v-1H3v1zm5-9l-4 4h3v6h2V9h3L8 5z"/></svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Tabs -->
+    <nav class="tabs">
+      <button class="tab active" data-tab="basic">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 100-6 3 3 0 000 6zm-6 8a6 6 0 1112 0H2z"/></svg>
+        <span>基本信息</span>
+      </button>
+      <button class="tab" data-tab="education">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0L0 4l8 4 8-4-8-4zM2 6v4l6 3 6-3V6L8 9 2 6z"/></svg>
+        <span>教育经历</span>
+      </button>
+      <button class="tab" data-tab="work">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M6 2v1H2a1 1 0 00-1 1v9a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1h-4V2a1 1 0 00-1-1H7a1 1 0 00-1 1zm1 0h2v1H7V2z"/></svg>
+        <span>工作/实习</span>
+      </button>
+      <button class="tab" data-tab="project">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 3a1 1 0 011-1h4.586a1 1 0 01.707.293l.707.707H13a1 1 0 011 1v8a1 1 0 01-1 1H3a1 1 0 01-1-1V3z"/></svg>
+        <span>项目/竞赛</span>
+      </button>
+      <button class="tab" data-tab="other">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 3a1 1 0 110 2 1 1 0 010-2zm2 8H6v-1h1V8H6V7h3v4h1v1z"/></svg>
+        <span>其他</span>
+      </button>
+    </nav>
+
+    <!-- Form Sections -->
+    <div class="form-scroll">
+
+      <!-- BASIC INFO -->
+      <div class="tab-content active" id="tab-basic">
+        <div class="form-row">
+          <div class="form-group">
+            <label>姓名 <span class="req">*</span></label>
+            <input type="text" data-field="name" placeholder="请输入姓名">
+          </div>
+          <div class="form-group form-sm">
+            <label>性别</label>
+            <select data-field="gender">
+              <option value="">请选择</option>
+              <option value="男">男</option>
+              <option value="女">女</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>身份证号</label>
+          <input type="text" data-field="idCard" placeholder="18位身份证号码" maxlength="18">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>出生日期</label>
+            <input type="date" data-field="birthday">
+          </div>
+          <div class="form-group">
+            <label>民族</label>
+            <input type="text" data-field="ethnicity" placeholder="如：汉族">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>手机号 <span class="req">*</span></label>
+            <input type="tel" data-field="phone" placeholder="11位手机号" maxlength="11">
+          </div>
+          <div class="form-group">
+            <label>邮箱 <span class="req">*</span></label>
+            <input type="email" data-field="email" placeholder="name@example.com">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>现居城市</label>
+            <input type="text" data-field="city" placeholder="如：北京市">
+          </div>
+          <div class="form-group">
+            <label>国籍</label>
+            <input type="text" data-field="nationality" placeholder="如：中国">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>籍贯</label>
+            <input type="text" data-field="hometown" placeholder="如：湖南省长沙市">
+          </div>
+          <div class="form-group">
+            <label>户口所在地</label>
+            <input type="text" data-field="hukou" placeholder="如：湖南省长沙市">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>详细地址</label>
+          <input type="text" data-field="address" placeholder="街道门牌号">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>身高(cm)</label>
+            <input type="text" data-field="height" placeholder="如：175">
+          </div>
+          <div class="form-group">
+            <label>体重(kg)</label>
+            <input type="text" data-field="weight" placeholder="如：65">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>政治面貌</label>
+            <select data-field="politicalStatus">
+              <option value="">请选择</option>
+              <option value="群众">群众</option>
+              <option value="共青团员">共青团员</option>
+              <option value="中共党员">中共党员</option>
+              <option value="中共预备党员">中共预备党员</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>婚姻状况</label>
+            <select data-field="maritalStatus">
+              <option value="">请选择</option>
+              <option value="未婚">未婚</option>
+              <option value="已婚">已婚</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- EDUCATION (multiple) -->
+      <div class="tab-content" id="tab-education">
+        <div id="eduList" class="entry-list"></div>
+        <button class="btn-add" id="addEdu">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 2a1 1 0 011 1v4h4a1 1 0 110 2H9v4a1 1 0 11-2 0V9H3a1 1 0 010-2h4V3a1 1 0 011-1z"/></svg>
+          添加教育经历
+        </button>
+      </div>
+
+      <!-- WORK / INTERN (multiple) -->
+      <div class="tab-content" id="tab-work">
+        <div id="workList" class="entry-list"></div>
+        <button class="btn-add" id="addWork">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 2a1 1 0 011 1v4h4a1 1 0 110 2H9v4a1 1 0 11-2 0V9H3a1 1 0 010-2h4V3a1 1 0 011-1z"/></svg>
+          添加工作/实习经历
+        </button>
+      </div>
+
+      <!-- PROJECT + COMPETITION (multiple) -->
+      <div class="tab-content" id="tab-project">
+        <div class="section-label">项目经历</div>
+        <div id="projectList" class="entry-list"></div>
+        <button class="btn-add" id="addProject">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 2a1 1 0 011 1v4h4a1 1 0 110 2H9v4a1 1 0 11-2 0V9H3a1 1 0 010-2h4V3a1 1 0 011-1z"/></svg>
+          添加项目经历
+        </button>
+        <div class="section-label" style="margin-top:12px">竞赛/荣誉</div>
+        <div id="competitionList" class="entry-list"></div>
+        <button class="btn-add" id="addCompetition">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 2a1 1 0 011 1v4h4a1 1 0 110 2H9v4a1 1 0 11-2 0V9H3a1 1 0 010-2h4V3a1 1 0 011-1z"/></svg>
+          添加竞赛/荣誉
+        </button>
+      </div>
+
+      <!-- OTHER -->
+      <div class="tab-content" id="tab-other">
+        <div class="section-label">求职意向</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>期望职位</label>
+            <input type="text" data-field="expectedJob" placeholder="目标岗位">
+          </div>
+          <div class="form-group">
+            <label>期望薪资</label>
+            <input type="text" data-field="expectedSalary" placeholder="15k-20k">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>工作年限</label>
+            <input type="text" data-field="workYears" placeholder="如：3年">
+          </div>
+          <div class="form-group">
+            <label>期望行业</label>
+            <input type="text" data-field="industry" placeholder="互联网/IT">
+          </div>
+        </div>
+
+        <div class="section-label">技能 & 语言</div>
+        <div class="form-group">
+          <label>技能特长</label>
+          <textarea data-field="skills" rows="2" placeholder="JavaScript, Python, React..."></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>英语水平</label>
+            <select data-field="englishLevel">
+              <option value="">请选择</option>
+              <option value="CET-4">CET-4 (四级)</option>
+              <option value="CET-6">CET-6 (六级)</option>
+              <option value="TEM-4">TEM-4 (专四)</option>
+              <option value="TEM-8">TEM-8 (专八)</option>
+              <option value="IELTS">IELTS 雅思</option>
+              <option value="TOEFL">TOEFL 托福</option>
+              <option value="熟练">熟练</option>
+              <option value="流利">流利</option>
+              <option value="母语">母语</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>英语成绩</label>
+            <input type="text" data-field="englishScore" placeholder="如：580 / 7.0">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>其他语言</label>
+            <input type="text" data-field="otherLanguage" placeholder="如：日语N1">
+          </div>
+          <div class="form-group">
+            <label>计算机等级</label>
+            <input type="text" data-field="computerLevel" placeholder="如：二级C语言">
+          </div>
+        </div>
+
+        <div class="section-label">证书/资质</div>
+        <div id="certList" class="entry-list"></div>
+        <button class="btn-add" id="addCert">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 2a1 1 0 011 1v4h4a1 1 0 110 2H9v4a1 1 0 11-2 0V9H3a1 1 0 010-2h4V3a1 1 0 011-1z"/></svg>
+          添加证书/资质
+        </button>
+
+        <div class="section-label">自我评价</div>
+        <div class="form-group">
+          <textarea data-field="selfEvaluation" rows="3" placeholder="简要描述个人优势"></textarea>
+        </div>
+
+        <div class="section-label">联系方式 & 其他</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>个人网站</label>
+            <input type="url" data-field="website" placeholder="https://">
+          </div>
+          <div class="form-group">
+            <label>微信号</label>
+            <input type="text" data-field="wechat" placeholder="微信号">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>QQ</label>
+            <input type="text" data-field="qq" placeholder="QQ号码">
+          </div>
+          <div class="form-group">
+            <label>LinkedIn</label>
+            <input type="text" data-field="linkedin" placeholder="LinkedIn">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>紧急联系人</label>
+            <input type="text" data-field="emergencyContact" placeholder="姓名">
+          </div>
+          <div class="form-group">
+            <label>紧急联系电话</label>
+            <input type="tel" data-field="emergencyPhone" placeholder="手机号">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scan Result Preview -->
+    <div id="scanResult" class="scan-result hidden">
+      <div class="scan-header">
+        <span>检测到 <strong id="scanCount">0</strong> 个可填写字段</span>
+        <button id="closeScan" class="icon-btn-sm">&times;</button>
+      </div>
+      <div id="scanList" class="scan-list"></div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <button id="btnSave" class="btn btn-secondary">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2v12h12V4.5L11.5 2H2zm2 1h5v3H4V3zm7 10H5V9h6v4z"/></svg>
+        保存
+      </button>
+      <button id="btnScan" class="btn btn-outline">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M1 3V1h3v1H2v1H1zm14 0V1h-3v1h2v1h1zM1 13v2h3v-1H2v-1H1zm14 0v2h-3v-1h2v-1h1zM3 5v6h10V5H3zm1 1h8v4H4V6z"/></svg>
+        扫描
+      </button>
+      <button id="btnFill" class="btn btn-primary">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2l4.5 1L14 3l-1 7.5L5.5 14 2 2zm4 4a1.5 1.5 0 100 3 1.5 1.5 0 000-3z"/></svg>
+        一键填写
+      </button>
+    </div>
+    <div class="footer-actions">
+      <button id="btnClear" class="link-btn danger">清除所有数据</button>
+    </div>
+
+    <div id="toast" class="toast hidden"></div>
+  </div>
+
+  <input type="file" id="importFile" accept=".json" style="display:none">
+  <script src="popup.js"></script>
+</body>
+</html>

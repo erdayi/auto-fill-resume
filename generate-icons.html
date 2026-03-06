@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head><title>Icon Generator</title></head>
+<body>
+<p>Right-click each canvas and "Save image as" to save the icons, or use the download links below.</p>
+<div id="canvases"></div>
+<script>
+const sizes = [16, 48, 128];
+const container = document.getElementById('canvases');
+
+sizes.forEach(size => {
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+
+  // Background circle
+  const r = size / 2;
+  ctx.beginPath();
+  ctx.arc(r, r, r, 0, Math.PI * 2);
+  ctx.fillStyle = '#1a73e8';
+  ctx.fill();
+
+  // Document icon
+  const pad = size * 0.25;
+  const w = size * 0.45;
+  const h = size * 0.55;
+  const x = (size - w) / 2;
+  const y = (size - h) / 2;
+
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + w * 0.65, y);
+  ctx.lineTo(x + w, y + h * 0.2);
+  ctx.lineTo(x + w, y + h);
+  ctx.lineTo(x, y + h);
+  ctx.closePath();
+  ctx.fill();
+
+  // Lines on document
+  ctx.strokeStyle = '#1a73e8';
+  ctx.lineWidth = Math.max(1, size * 0.04);
+  const lineY1 = y + h * 0.4;
+  const lineY2 = y + h * 0.55;
+  const lineY3 = y + h * 0.7;
+  ctx.beginPath();
+  ctx.moveTo(x + w * 0.15, lineY1);
+  ctx.lineTo(x + w * 0.85, lineY1);
+  ctx.moveTo(x + w * 0.15, lineY2);
+  ctx.lineTo(x + w * 0.65, lineY2);
+  ctx.moveTo(x + w * 0.15, lineY3);
+  ctx.lineTo(x + w * 0.75, lineY3);
+  ctx.stroke();
+
+  // Checkmark
+  const cx = x + w * 0.75;
+  const cy = y + h * 0.85;
+  const cr = size * 0.15;
+  ctx.beginPath();
+  ctx.arc(cx, cy, cr, 0, Math.PI * 2);
+  ctx.fillStyle = '#34a853';
+  ctx.fill();
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = Math.max(1, size * 0.05);
+  ctx.beginPath();
+  ctx.moveTo(cx - cr * 0.4, cy);
+  ctx.lineTo(cx - cr * 0.1, cy + cr * 0.35);
+  ctx.lineTo(cx + cr * 0.45, cy - cr * 0.3);
+  ctx.stroke();
+
+  const label = document.createElement('div');
+  label.style.margin = '10px';
+  label.innerHTML = `<p>${size}x${size}:</p>`;
+  label.appendChild(canvas);
+
+  const link = document.createElement('a');
+  link.download = `icon${size}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.textContent = ` Download icon${size}.png`;
+  label.appendChild(link);
+
+  container.appendChild(label);
+});
+</script>
+</body>
+</html>
