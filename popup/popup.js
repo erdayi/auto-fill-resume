@@ -914,6 +914,16 @@ document.querySelectorAll('.parse-mode-tab').forEach(tab => {
   });
 });
 
+// Settings button — jump to history tab and open sync settings
+document.getElementById('btnSettings').addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelector('[data-tab="history"]').classList.add('active');
+  document.getElementById('tab-history').classList.add('active');
+  const details = document.querySelector('.sync-settings');
+  if (details) details.open = true;
+});
+
 // Open modal
 document.getElementById('btnUploadResume').addEventListener('click', () => {
   document.getElementById('resumeModal').classList.remove('hidden');
