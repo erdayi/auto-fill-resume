@@ -692,3 +692,14 @@ body {
 }
 .link-btn:hover { background: var(--bg); }
 .link-btn.danger:hover { color: var(--danger); background: var(--danger-soft); }
+
+/* Developer credit */
+.dev-credit {
+  text-align: center; padding: 6px 0 8px;
+  font-size: 10px; color: var(--text-3);
+}
+.dev-credit a {
+  color: var(--text-3); text-decoration: none;
+  transition: color var(--transition);
+}
+.dev-credit a:hover { color: var(--primary); }
